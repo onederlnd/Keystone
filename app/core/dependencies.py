@@ -5,39 +5,44 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.security import decode_access_token
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db),
+    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
 ):
-    # TODO: Resolve the JWT token to a User model instance
+    payload = decode_access_token(token)
+    if payload is None:
+        raise HTTPException(401, "WWW-Authentication: Bearer header")
 
-    # Step 1: Call decode_access_token(token) — if it returns None, raise 401
-    # Step 2: Extract the "sub" claim from the payload (this will be the user's id or email)
-    # Step 3: Query the DB for the user — if not found, raise 401
-    # Step 4: Return the user object
-    # Tip: Use HTTPException(status_code=401, detail="...", headers={"WWW-Authenticate": "Bearer"})
-    raise NotImplementedError
+    sub = payload.get("sub")
+    if not sub:
+        raise HTTPException(401, "Email or ID missing")
+
+    user = 0  # TODO
+    if not user:
+        raise HTTPException(401, "User not found")
+
+    return user
 
 
-async def get_current_active_user(
-    current_user=Depends(get_current_user),
-):
+async def get_current_active_user(current_user=Depends(get_current_user)):
     if not current_user.is_active:
-        raise HTTPException(403, "Inactive user")
+        raise HTTPException(403, "Inactive account")
 
     return current_user
 
 
-def require_role(*roles: str):
-    # TODO: This is a dependency *factory* — it returns a dependency function, not a value
-    # Step 1: Define an inner async function that depends on get_current_active_user
+def require_role(*roles):
+    def _is_role(current_user=Depends(get_current_active_user)):
+        if current_user.role in roles:
+            return current_user
+        else:
+            raise HTTPException(403, "User not correct role")
 
-    # Step 2: Inside it, check if current_user.role is in the `roles` tuple
-    # Step 3: If not, raise HTTPException 403 with detail "Insufficient permissions"
-    # Step 4: If yes, return current_user
-    # Step 5: Return the inner function (not the result of calling it)
-    # Usage in a route: current_user = Depends(require_role("admin", "agent"))
-    raise NotImplementedError
+    return _is_role()
+
+
+async def get_approval_queue_entry(id, db: AsyncSession = Depends(get_db)):
+    # STUB: Phase 7 — not implemented yet
+    raise HTTPException(404, "Current endpoint is not yet available")
