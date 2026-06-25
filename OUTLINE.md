@@ -58,8 +58,8 @@ These apply across every phase. Every decision about status modeling, service de
   - [x] `requires_approval` flag set per transition (e.g. `active → under_contract` = True)
 - [ ] `app/automation/` package stub
   - [x] `__init__.py`
-  - [ ] `hooks.py` — `register_hook(event: str, fn)` and `fire_hook(event: str, context: dict)` — when `AUTOMATION_ENABLED=False`, `fire_hook` is a no-op
-  - [ ] `registry.py` — empty dict, hooks registered here in later phases
+  - [x] `hooks.py` — `register_hook(event: str, fn)` and `fire_hook(event: str, context: dict)` — when `AUTOMATION_ENABLED=False`, `fire_hook` is a no-op
+  - [x] `registry.py` — empty dict, hooks registered here in later phases
 - [ ] `app/models/audit_log.py`
   - [ ] `id` UUID PK
   - [ ] `entity_type` str (e.g. `listing`, `pipeline`, `document`)
