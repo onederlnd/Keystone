@@ -25,7 +25,7 @@ These apply across every phase. Every decision about status modeling, service de
 ### 1.1 Project Scaffold
 
 - [x] Create `app/` package with `__init__.py` in every subpackage
-- [~] `app/core/config.py` — Pydantic `Settings` class
+- [x] `app/core/config.py` — Pydantic `Settings` class
   - [x] `DATABASE_URL`
   - [x] `SECRET_KEY`
   - [x] `ALGORITHM`
@@ -44,7 +44,7 @@ These apply across every phase. Every decision about status modeling, service de
   - [x] `verify_password(plain, hashed) -> bool`
   - [x] `create_access_token(data: dict, expires_delta=None) -> str`
   - [x] `decode_access_token(token: str) -> dict | None`
-- [~] `app/core/dependencies.py`
+- [x] `app/core/dependencies.py`
   - [x] `get_current_user(token, db)` — decodes JWT, fetches user, 401 if invalid
   - [x] `require_role(*roles)` — dependency factory, 403 if role not in allowed list
   - [x] `get_current_active_user` — 403 if `is_active == False`
@@ -57,7 +57,7 @@ These apply across every phase. Every decision about status modeling, service de
   - [x] `DOCUMENT_MACHINE` defined (states: `draft`, `sent`, `signed`, `voided`)
   - [x] `requires_approval` flag set per transition (e.g. `active → under_contract` = True)
 - [ ] `app/automation/` package stub
-  - [ ] `__init__.py`
+  - [x] `__init__.py`
   - [ ] `hooks.py` — `register_hook(event: str, fn)` and `fire_hook(event: str, context: dict)` — when `AUTOMATION_ENABLED=False`, `fire_hook` is a no-op
   - [ ] `registry.py` — empty dict, hooks registered here in later phases
 - [ ] `app/models/audit_log.py`
