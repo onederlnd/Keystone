@@ -28,3 +28,6 @@ class Settings(BaseSettings):
     smtp_port: int
     smtp_user: str
     smtp_pass: str
+
+
+settings = Settings()

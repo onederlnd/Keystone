@@ -60,39 +60,39 @@ These apply across every phase. Every decision about status modeling, service de
   - [x] `__init__.py`
   - [x] `hooks.py` — `register_hook(event: str, fn)` and `fire_hook(event: str, context: dict)` — when `AUTOMATION_ENABLED=False`, `fire_hook` is a no-op
   - [x] `registry.py` — empty dict, hooks registered here in later phases
-- [ ] `app/models/audit_log.py`
-  - [ ] `id` UUID PK
-  - [ ] `entity_type` str (e.g. `listing`, `pipeline`, `document`)
-  - [ ] `entity_id` UUID
-  - [ ] `action` str
-  - [ ] `from_state` nullable str
-  - [ ] `to_state` nullable str
-  - [ ] `triggered_by` str (`manual`, `automation`, `system`)
-  - [ ] `actor_id` FK → `users.id`, nullable
-  - [ ] `notes` Text, nullable
-  - [ ] `created_at` timestamp
-- [ ] `app/models/approval_queue.py`
-  - [ ] `id` UUID PK
-  - [ ] `entity_type` str
-  - [ ] `entity_id` UUID
-  - [ ] `proposed_action` str
-  - [ ] `proposed_state` nullable str
-  - [ ] `context` JSON
-  - [ ] `status` Enum (`pending`, `approved`, `rejected`, `expired`), default `pending`
-  - [ ] `created_by` str (`automation`, `system`)
-  - [ ] `reviewed_by_id` FK → `users.id`, nullable
-  - [ ] `reviewed_at` timestamp, nullable
-  - [ ] `expires_at` timestamp, nullable
-  - [ ] `created_at` timestamp
-- [ ] `app/main.py`
-  - [ ] `FastAPI()` instance
-  - [ ] CORS middleware configured
-  - [ ] Routers registered (`auth`, `users`)
-  - [ ] `/health` endpoint returns 200
-- [ ] `requirements.txt` pinned
-- [ ] `.env.example` with all required keys
-- [ ] `alembic init alembic` run, `env.py` wired to async engine + `Base.metadata`
-- [ ] Initial Alembic migration covering `users`, `audit_log`, `approval_queue`
+- [x] `app/models/audit_log.py`
+  - [x] `id` UUID PK
+  - [x] `entity_type` str (e.g. `listing`, `pipeline`, `document`)
+  - [x] `entity_id` UUID
+  - [x] `action` str
+  - [x] `from_state` nullable str
+  - [x] `to_state` nullable str
+  - [x] `triggered_by` str (`manual`, `automation`, `system`)
+  - [x] `actor_id` FK → `users.id`, nullable
+  - [x] `notes` Text, nullable
+  - [x] `created_at` timestamp
+- [x] `app/models/approval_queue.py`
+  - [x] `id` UUI PK
+  - [x] `entity_type` str
+  - [x] `entity_id` UUID
+  - [x] `proposed_action` str
+  - [x] `proposed_state` nullable str
+  - [x] `context` JSON
+  - [x] `status` Enum (`pending`, `approved`, `rejected`, `expired`), default `pending`
+  - [x] `created_by` str (`automation`, `system`)
+  - [x] `reviewed_by_id` FK → `users.id`, nullable
+  - [x] `reviewed_at` timestamp, nullable
+  - [x] `expires_at` timestamp, nullable
+  - [x] `created_at` timestamp
+- [x] `app/main.py`
+  - [x] `FastAPI()` instance
+  - [x] CORS middleware configured
+  - [x] Routers registered (`auth`, `users`)
+  - [x] `/health` endpoint returns 200
+- [x] `requirements.txt` pinned
+- [x] `.env.example` with all required keys
+- [x] `alembic init alembic` run, `env.py` wired to async engine + `Base.metadata`
+- [x] Initial Alembic migration covering `users`, `audit_log`, `approval_queue`
 
 ### 1.2 User Model & Schema
 
