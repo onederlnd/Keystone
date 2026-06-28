@@ -16,6 +16,7 @@ class ApprovalQueue(Base):
     proposed_state: Mapped[str | None] = mapped_column(nullable=True)
     context: Mapped[dict] = mapped_column(JSON, nullable=True)
     status: Mapped[str] = mapped_column(default="pending")
+
     created_by: Mapped[str] = mapped_column(nullable=False)
     reviewed_by_id: Mapped[str | None] = mapped_column(
         ForeignKey("users.id"), nullable=True

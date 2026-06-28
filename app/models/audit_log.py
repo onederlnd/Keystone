@@ -4,7 +4,6 @@ import uuid
 from sqlalchemy import DateTime, ForeignKey, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime, timezone
-
 from app.core.database import Base
 
 

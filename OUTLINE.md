@@ -121,24 +121,24 @@ These apply across every phase. Every decision about status modeling, service de
 - [x] `tests/conftest.py` — async engine fixture, `db_session`, `client`, `create_user_in_db`, `auth_headers(role)`
 - [x] `tests/test_auth.py` — register, login, duplicate email, bad credentials, token rejection
 - [x] `tests/test_users.py` — profile, role enforcement, self-edit, admin-only delete
-- [ ] `tests/test_state_machine.py`
-  - [ ] Valid transition returns `True`
-  - [ ] Invalid transition returns `False`
-  - [ ] `requires_approval` flag correct per transition
-  - [ ] `automation_hook` name returned correctly
-- [ ] `tests/test_audit_log.py`
-  - [ ] Audit record written on user creation
-  - [ ] Audit record includes correct `actor_id`, `entity_type`, `action`
+- [x] `tests/test_state_machine.py`
+  - [x] Valid transition returns `True`
+  - [x] Invalid transition returns `False`
+  - [x] `requires_approval` flag correct per transition
+  - [x] `automation_hook` name returned correctly
+- [x] `tests/test_audit_log.py`
+  - [x] Audit record written on user creation
+  - [x] Audit record includes correct `actor_id`, `entity_type`, `action`
 
 ### Phase 1 Completion Criteria
 
-- [ ] App starts cleanly with `uvicorn app.main:app --reload`
-- [ ] Full auth flow works end-to-end
-- [ ] Role enforcement verified
-- [ ] State machine correctly validates and rejects transitions for all three entity types
-- [ ] Audit log and approval queue tables exist and are writable
-- [ ] `fire_hook` is a confirmed no-op when `AUTOMATION_ENABLED=False`
-- [ ] `pytest tests/` — all green
+- [x] App starts cleanly with `uvicorn app.main:app --reload`
+- [x] Full auth flow works end-to-end
+- [x] Role enforcement verified
+- [x] State machine correctly validates and rejects transitions for all three entity types
+- [x] Audit log and approval queue tables exist and are writable
+- [x] `fire_hook` is a confirmed no-op when `AUTOMATION_ENABLED=False`
+- [x] `pytest tests/` — all green
 
 ---
 
@@ -148,19 +148,19 @@ These apply across every phase. Every decision about status modeling, service de
 
 ### 2.1 Models
 
-- [ ] `app/models/listing.py`
-  - [ ] Standard fields: `id`, `agent_id`, `seller_id`, `address`, `city`, `state`, `zip`, `price`, `bedrooms`, `bathrooms`, `sqft`, `description`, `mls_id`
-  - [ ] `status` — transitions enforced via `LISTING_MACHINE`, not raw enum writes
-  - [ ] `created_at`, `updated_at`
-  - [ ] Relationship to `ListingStatusHistory` (cascade delete)
-- [ ] `app/models/listing_status_history.py`
-  - [ ] `id`, `listing_id`, `previous_status`, `new_status`, `changed_by_id`, `note`, `changed_at`
-  - [ ] `triggered_by` str — `manual` or `automation`
-- [ ] Alembic migration for both tables
+- [x] `app/models/listing.py`
+  - [x] Standard fields: `id`, `agent_id`, `seller_id`, `address`, `city`, `state`, `zip`, `price`, `bedrooms`, `bathrooms`, `sqft`, `description`, `mls_id`
+  - [x] `status` — transitions enforced via `LISTING_MACHINE`, not raw enum writes
+  - [x] `created_at`, `updated_at`
+  - [x] Relationship to `ListingStatusHistory` (cascade delete)
+- [x] `app/models/listing_status_history.py`
+  - [x] `id`, `listing_id`, `previous_status`, `new_status`, `changed_by_id`, `note`, `changed_at`
+  - [x] `triggered_by` str — `manual` or `automation`
+- [x] Alembic migration for both tables
 
 ### 2.2 Schemas
 
-- [ ] `ListingCreate`, `ListingRead` (includes `price_per_sqft`), `ListingUpdate`, `ListingStatusUpdate` (new_status, note), `ListingStatusHistoryRead`, `ListingFilterParams`
+- [x] `ListingCreate`, `ListingRead` (includes `price_per_sqft`), `ListingUpdate`, `ListingStatusUpdate` (new_status, note), `ListingStatusHistoryRead`, `ListingFilterParams`
 
 ### 2.3 Service & Routes
 
