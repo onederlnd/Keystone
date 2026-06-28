@@ -1,19 +1,19 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import Settings
+from app.core.config import settings
 
 from app.routers import auth, users
 
-app = FastAPI(title=Settings.api_title)
+app = FastAPI(title=settings.api_title)
 app.add_middleware(
     CORSMiddleware,
-    allow_origin=["*"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.incldue_router(auth.router)
+app.include_router(auth.router)
 app.include_router(users.router)
 
 

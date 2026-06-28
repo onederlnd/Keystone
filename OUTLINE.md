@@ -96,31 +96,31 @@ These apply across every phase. Every decision about status modeling, service de
 
 ### 1.2 User Model & Schema
 
-- [ ] `app/models/user.py`
-  - [ ] `id` UUID PK, default `uuid4`
-  - [ ] `email` unique, indexed, not null
-  - [ ] `hashed_password` not null
-  - [ ] `full_name`
-  - [ ] `role` Enum (`admin`, `agent`, `buyer`, `seller`), default `buyer`
-  - [ ] `is_active` bool, default `True`
-  - [ ] `created_at`, `updated_at` via `TimestampMixin`
-- [ ] `app/schemas/user.py`
-  - [ ] `UserCreate`, `UserLogin`, `UserRead`, `UserUpdate`, `Token`
-- [ ] `app/models/mixins.py` — `TimestampMixin` with `created_at`, `updated_at`
+- [X] `app/models/user.py`
+  - [X] `id` UUID PK, default `uuid4`
+  - [X] `email` unique, indexed, not null
+  - [X] `hashed_password` not null
+  - [X] `full_name`
+  - [X] `role` Enum (`admin`, `agent`, `buyer`, `seller`), default `buyer`
+  - [X] `is_active` bool, default `True`
+  - [X] `created_at`, `updated_at` via `TimestampMixin`
+- [x] `app/schemas/user.py`
+  - [x] `UserCreate`, `UserLogin`, `UserRead`, `UserUpdate`, `Token`
+- [x] `app/models/mixins.py` — `TimestampMixin` with `created_at`, `updated_at`
 
 ### 1.3 Services & Routes
 
-- [ ] `app/services/user_service.py`
-  - [ ] `create_user`, `authenticate_user`, `get_user_by_id`, `get_user_by_email`, `update_user`, `deactivate_user`
-  - [ ] Each mutating function writes to `audit_log`
-- [ ] `app/routers/auth.py` — `POST /auth/register`, `POST /auth/login`
-- [ ] `app/routers/users.py` — `GET /users/me`, `GET /users/{id}`, `PATCH /users/{id}`, `DELETE /users/{id}`
+- [x] `app/services/user_service.py`
+  - [x] `create_user`, `authenticate_user`, `get_user_by_id`, `get_user_by_email`, `update_user`, `deactivate_user`
+  - [x] Each mutating function writes to `audit_log`
+- [x] `app/routers/auth.py` — `POST /auth/register`, `POST /auth/login`
+- [x] `app/routers/users.py` — `GET /users/me`, `GET /users/{id}`, `PATCH /users/{id}`, `DELETE /users/{id}`
 
 ### 1.4 Tests
 
-- [ ] `tests/conftest.py` — async engine fixture, `db_session`, `client`, `create_user_in_db`, `auth_headers(role)`
-- [ ] `tests/test_auth.py` — register, login, duplicate email, bad credentials, token rejection
-- [ ] `tests/test_users.py` — profile, role enforcement, self-edit, admin-only delete
+- [x] `tests/conftest.py` — async engine fixture, `db_session`, `client`, `create_user_in_db`, `auth_headers(role)`
+- [x] `tests/test_auth.py` — register, login, duplicate email, bad credentials, token rejection
+- [x] `tests/test_users.py` — profile, role enforcement, self-edit, admin-only delete
 - [ ] `tests/test_state_machine.py`
   - [ ] Valid transition returns `True`
   - [ ] Invalid transition returns `False`

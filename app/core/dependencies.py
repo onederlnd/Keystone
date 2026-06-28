@@ -1,7 +1,8 @@
+import uuid
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.services.user import get_user_by_id
 from app.core.database import get_db
 from app.core.security import decode_access_token
 
@@ -19,7 +20,7 @@ async def get_current_user(
     if not sub:
         raise HTTPException(401, "Email or ID missing")
 
-    user = 0  # TODO
+    user = await get_user_by_id(db, uuid.UUID(sub))
     if not user:
         raise HTTPException(401, "User not found")
 
@@ -40,7 +41,7 @@ def require_role(*roles):
         else:
             raise HTTPException(403, "User not correct role")
 
-    return _is_role()
+    return _is_role
 
 
 async def get_approval_queue_entry(id, db: AsyncSession = Depends(get_db)):

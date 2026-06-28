@@ -29,5 +29,8 @@ class Settings(BaseSettings):
     smtp_user: str
     smtp_pass: str
 
+    # API
+    api_title: str = "Keystone API"
+
 
 settings = Settings()
