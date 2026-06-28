@@ -47,6 +47,16 @@ async def client(db_session):
 
 
 @pytest_asyncio.fixture
+async def auth_headers(create_user_in_db):
+    async def _headers(role=UserRole.buyer):
+        user = await create_user_in_db(email=f"{role.value}@test.com", role=role)
+        token = create_access_token({"sub": str(user.id)})
+        return {"Authorization": f"Bearer {token}"}
+
+    return _headers
+
+
+@pytest_asyncio.fixture
 async def create_user_in_db(db_session):
     async def _create(
         email="test@test.com", password="password123", role=UserRole.buyer
@@ -64,13 +74,3 @@ async def create_user_in_db(db_session):
         return user
 
     return _create
-
-
-@pytest_asyncio.fixture
-async def auth_headers(create_user_in_db):
-    async def _headers(role=UserRole.buyer):
-        user = await create_user_in_db(email=f"{role.value}@test.com", role=role)
-        token = create_access_token({"sub": str(user.id)})
-        return {"Authorization": f"Bearer {token}"}
-
-    return _headers
