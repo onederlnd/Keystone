@@ -51,6 +51,7 @@ class ListingUpdate(BaseModel):
 
 class ListingStatusUpdate(BaseModel):
     new_status: str
+    changed_by_id: uuid.UUID
     notes: str | None = None
     triggered_by: str
 

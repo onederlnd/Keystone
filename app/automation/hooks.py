@@ -10,8 +10,10 @@ def register_hook(event, fn):
 
 
 def fire_hook(event, context):
-    if not settings.AUTOMATION_ENABLED:
+    if not settings.automation_enabled:
+        print(f"[AUTOMATION DISABLED] Would fire hook: {event} with context: {context}")
         return
+
     functions = REGISTRY.get(event, [])
 
     for fn in functions:

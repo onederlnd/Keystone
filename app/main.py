@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 
-from app.routers import auth, users
+from app.routers import auth, users, listings, contacts, pipeline
 
 app = FastAPI(title=settings.api_title)
 app.add_middleware(
@@ -15,6 +15,9 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(users.router)
+app.include_router(listings.router)
+app.include_router(contacts.router)
+app.include_router(pipeline.router)
 
 
 @app.get("/health", status_code=200)

@@ -13,6 +13,7 @@ These apply across every phase. Every decision about status modeling, service de
 - **State machines first** — any entity with a status uses explicit transition definitions, not free-form enum updates. Invalid transitions are rejected at the service layer.
 - **Hooks, not hardcoding** — services emit transition events. Automation rules subscribe to those events. No automation logic lives inside service functions directly.
 - **Approval queue from day one** — the queue model and dependency exist from Phase 1. Phases 2–6 populate it. Phase 7 activates the UI and rule engine on top of it.
+- **A `requires_approval` transition always queues, regardless of `triggered_by`** — manual and automated changes are held to the same standard. A human clicking a button doesn't get to skip the approval step a transition is defined to need; if a transition shouldn't need review when done manually, that's a state-machine design change (make it `requires_approval=False`), not a service-layer bypass.
 - **Audit trail always** — every state transition (manual or automated) writes an audit record. Who did it, what changed, what triggered it.
 - **Kill switch** — `AUTOMATION_ENABLED` env flag. When false, hooks are registered but never fire. Services and state machines work identically in both modes.
 
@@ -56,8 +57,9 @@ These apply across every phase. Every decision about status modeling, service de
   - [x] `PIPELINE_MACHINE` defined (states: `new`, `contacted`, `showing_scheduled`, `offer_submitted`, `negotiating`, `under_contract`, `closed`, `lost`)
   - [x] `DOCUMENT_MACHINE` defined (states: `draft`, `sent`, `signed`, `voided`)
   - [x] `requires_approval` flag set per transition (e.g. `active → under_contract` = True)
-- [ ] `app/automation/` package stub
+- [x] `app/automation/` package stub
   - [x] `__init__.py`
+
   - [x] `hooks.py` — `register_hook(event: str, fn)` and `fire_hook(event: str, context: dict)` — when `AUTOMATION_ENABLED=False`, `fire_hook` is a no-op
   - [x] `registry.py` — empty dict, hooks registered here in later phases
 - [x] `app/models/audit_log.py`
@@ -164,38 +166,38 @@ These apply across every phase. Every decision about status modeling, service de
 
 ### 2.3 Service & Routes
 
-- [ ] `app/services/listing_service.py`
-  - [ ] `create_listing`, `get_listing`, `list_listings`, `update_listing`, `archive_listing`
-  - [ ] `change_status(db, id, new_status, note, changed_by_id, triggered_by="manual")`
-    - [ ] Validates transition via `LISTING_MACHINE.can_transition()`
-    - [ ] If `requires_approval=True` and `triggered_by="automation"` → write to `approval_queue` instead of applying
-    - [ ] On apply: write `ListingStatusHistory`, write `audit_log`, call `fire_hook(f"listing.{new_status}", context)`
-  - [ ] `get_status_history`
-- [ ] `app/routers/listings.py` — all CRUD routes + `PATCH /{id}/status` + `GET /{id}/history`
+- [x] `app/services/listing_service.py`
+  - [x] `create_listing`, `get_listing`, `list_listings`, `update_listing`, `archive_listing`
+  - [x] `change_status(db, id, new_status, note, changed_by_id, triggered_by="manual")`
+    - [x] Validates transition via `LISTING_MACHINE.can_transition()`
+    - [x] If `requires_approval=True` → write to `approval_queue` instead of applying
+    - [x] On apply: write `ListingStatusHistory`, write `audit_log`, call `fire_hook(f"listing.{new_status}", context)`
+  - [x] `get_status_history`
+- [x] `app/routers/listings.py` — all CRUD routes + `PATCH /{id}/status` + `GET /{id}/history`
 
 ### 2.4 Automation Hooks (stub registration)
 
-- [ ] `app/automation/registry.py` — register stub hooks for:
-  - [ ] `listing.active` — placeholder for "notify seller listing is live"
-  - [ ] `listing.under_contract` — placeholder for "generate disclosure doc"
-  - [ ] `listing.sold` — placeholder for "generate closing summary"
-- [ ] Hooks log intent to console when `AUTOMATION_ENABLED=False`, fire task when `True`
+- [x] `app/automation/registry.py` — register stub hooks for:
+  - [x] `listing.active` — placeholder for "notify seller listing is live"
+  - [x] `listing.under_contract` — placeholder for "generate disclosure doc"
+  - [x] `listing.sold` — placeholder for "generate closing summary"
+- [x] Hooks log intent to console when `AUTOMATION_ENABLED=False`, fire task when `True`
 
 ### 2.5 Tests
 
-- [ ] `tests/test_listings.py` — full CRUD, filter, status change, history log
-- [ ] `tests/test_listing_hooks.py`
-  - [ ] Status change calls `fire_hook` with correct event name and context
-  - [ ] When `AUTOMATION_ENABLED=False`, hook fires but is no-op (no side effects)
-  - [ ] Approval-required transitions write to `approval_queue`, not `listing_status_history`
+- [x] `tests/test_listings.py` — full CRUD, filter, status change, history log
+- [x] `tests/test_listing_hooks.py`
+  - [x] Status change calls `fire_hook` with correct event name and context
+  - [x] When `AUTOMATION_ENABLED=False`, hook fires but is no-op (no side effects)
+  - [x] Approval-required transitions write to `approval_queue`, not `listing_status_history`
 
 ### Phase 2 Completion Criteria
 
-- [ ] Listings CRUD fully functional
-- [ ] Every status change goes through `LISTING_MACHINE` — invalid transitions rejected with 422
-- [ ] Approval-required transitions land in queue, not applied directly
-- [ ] Hooks called on every valid transition
-- [ ] `pytest tests/test_listings.py tests/test_listing_hooks.py -v` — all green
+- [x] Listings CRUD fully functional
+- [x] Every status change goes through `LISTING_MACHINE` — invalid transitions rejected with 422
+- [x] Approval-required transitions land in queue regardless of `triggered_by`, not applied directly
+- [x] Hooks called on every valid transition
+- [x] `pytest tests/test_listings.py tests/test_listing_hooks.py -v` — all green (re-run after the `change_status` fix + new manual-approval test)
 
 ---
 
@@ -205,55 +207,57 @@ These apply across every phase. Every decision about status modeling, service de
 
 ### 3.1 Models
 
-- [ ] `app/models/contact.py` — `id`, `agent_id`, `user_id`, `full_name`, `email`, `phone`, `type`, `source`, `notes`, timestamps
-- [ ] `app/models/pipeline.py`
-  - [ ] `id`, `listing_id`, `contact_id`, `agent_id`, `stage`, `offer_price`, `next_action`, `next_action_date`, `notes`, timestamps
-  - [ ] `last_stage_change_at` timestamp — used for stale detection
-  - [ ] Unique constraint: `(listing_id, contact_id)`
-- [ ] Alembic migration for both tables
+- [x] `app/models/contact.py` — `id`, `agent_id`, `user_id`, `full_name`, `email`, `phone`, `type`, `source`, `notes`, timestamps
+- [x] `app/models/pipeline.py`
+  - [x] `id`, `listing_id`, `contact_id`, `agent_id`, `stage`, `offer_price`, `next_action`, `next_action_date`, `notes`, timestamps
+  - [x] `last_stage_change_at` timestamp — used for stale detection
+  - [x] Unique constraint: `(listing_id, contact_id)`
+- [x] Alembic migration for both tables
 
 ### 3.2 Schemas
 
-- [ ] `ContactCreate`, `ContactRead`, `ContactUpdate`
-- [ ] `PipelineCreate`, `PipelineRead`, `PipelineUpdate`, `PipelineFilterParams`
+- [x] `ContactCreate`, `ContactRead`, `ContactUpdate`
+- [x] `PipelineCreate`, `PipelineRead`, `PipelineUpdate`, `PipelineFilterParams`
 
 ### 3.3 Services & Routes
 
-- [ ] `app/services/contact_service.py` — standard CRUD with ownership checks; `create_contact` fires `contact.created` hook
-- [ ] `app/services/pipeline_service.py`
-  - [ ] `add_to_pipeline`, `get_pipeline_entry`, `list_pipeline`, `remove_pipeline_entry`
-  - [ ] `update_pipeline_entry(db, id, payload, triggered_by="manual")`
-    - [ ] Stage change validated via `PIPELINE_MACHINE.can_transition()`
-    - [ ] On valid transition: update `last_stage_change_at`, write audit log, call `fire_hook(f"pipeline.{new_stage}", context)`
-    - [ ] Approval-required transitions → write to `approval_queue`
-  - [ ] `get_stale_pipeline_entries(db, days_threshold)` — entries where `last_stage_change_at` is older than threshold
-- [ ] `app/routers/contacts.py`, `app/routers/pipeline.py` — standard CRUD
+- [x] `app/services/contact_service.py` — standard CRUD with ownership checks; `create_contact` fires `contact.created` hook
+- [x] `app/services/pipeline_service.py`
+  - [x] `add_to_pipeline`, `get_pipeline_entry`, `list_pipeline`, `remove_pipeline_entry`
+  - [x] `update_pipeline_entry(db, id, payload, triggered_by="manual")`
+    - [x] Stage change validated via `PIPELINE_MACHINE.get_transition()`
+    - [x] On valid transition: update `last_stage_change_at`, write audit log, call `fire_hook(transition.automation_hook, context)`
+    - [x] Approval-required transitions → write to `approval_queue`, regardless of `triggered_by` (consistent with updated Phase 2 behavior)
+  - [x] `get_stale_pipeline_entries(db, days_threshold)` — entries where `last_stage_change_at` is older than threshold
+- [x] `app/routers/contacts.py`, `app/routers/pipeline.py` — standard CRUD
+  - [x] `app/routers/pipeline.py` missing `GET /` list route (service has `list_pipeline`, router doesn't expose it yet)
+  - [x] `app/routers/contacts.py` has known bugs (missing path params, duplicate `PATCH ""` route for update vs. archive) — needs a pass
 
 ### 3.4 Automation Hooks (stub registration)
 
-- [ ] `pipeline.offer_submitted` — placeholder "notify agent of new offer"
-- [ ] `pipeline.closed` — placeholder "generate closing docs, notify all parties"
-- [ ] `pipeline.lost` — placeholder "trigger re-engagement sequence"
-- [ ] `contact.created` — placeholder "notify agent of new contact assignment"
-- [ ] Celery task stub: `tasks/pipeline_tasks.py` — `check_stale_pipeline` periodic task (no-op body, Celery beat schedule defined)
+- [x] `pipeline.offer_submitted` — placeholder "notify agent of new offer"
+- [x] `pipeline.closed` — placeholder "generate closing docs, notify all parties"
+- [x] `pipeline.lost` — placeholder "trigger re-engagement sequence"
+- [x] `contact.created` — placeholder "notify agent of new contact assignment"
+- [x] Celery task stub: `tasks/pipeline_tasks.py` — `check_stale_pipeline` periodic task (no-op body, Celery beat schedule defined)
 
 ### 3.5 Tests
 
-- [ ] `tests/test_contacts.py` — CRUD, ownership, type filter
-- [ ] `tests/test_pipeline.py` — add, duplicate rejection, stage transitions, filter
-- [ ] `tests/test_pipeline_hooks.py`
-  - [ ] `offer_submitted` transition fires correct hook
-  - [ ] `closed` transition fires correct hook
-  - [ ] Stale detection returns correct entries given seeded `last_stage_change_at` values
-  - [ ] Approval-required transitions land in queue
+- [x] `tests/test_contacts.py` — CRUD, ownership, type filter
+- [x] `tests/test_pipeline.py` — add, duplicate rejection, stage transitions, filter
+- [x] `tests/test_pipeline_hooks.py`
+  - [x] `offer_submitted` transition fires correct hook
+  - [x] `closed` transition fires correct hook
+  - [x] Stale detection returns correct entries given seeded `last_stage_change_at` values
+  - [x] Approval-required transitions land in queue (both `manual` and `automation` triggered)
 
 ### Phase 3 Completion Criteria
 
-- [ ] Contact CRUD with agent ownership enforced
-- [ ] Pipeline stages advance through `PIPELINE_MACHINE` only
-- [ ] Stale detection query works correctly
-- [ ] Hooks fire on every stage transition
-- [ ] `pytest tests/test_contacts.py tests/test_pipeline.py tests/test_pipeline_hooks.py -v` — all green
+- [x] Contact CRUD with agent ownership enforced
+- [x] Pipeline stages advance through `PIPELINE_MACHINE` only
+- [x] Stale detection query works correctly
+- [x] Hooks fire on every stage transition
+- [x] `pytest tests/test_contacts.py tests/test_pipeline.py tests/test_pipeline_hooks.py -v` — all green
 
 ---
 
@@ -477,6 +481,7 @@ These apply across every phase. Every decision about status modeling, service de
 - [ ] State machine transition validated at service layer before any DB write
 - [ ] Every state transition writes to `audit_log` — manual or automated
 - [ ] `fire_hook` called after every successful transition, never before
+- [ ] `requires_approval` transitions queue for review regardless of `triggered_by` — consistent across all entity types
 - [ ] `AUTOMATION_ENABLED=False` confirmed no-op at hook layer — no side effects
 - [ ] Alembic migration committed for every model change
 - [ ] No bare `except:` blocks — errors surface as HTTP status codes

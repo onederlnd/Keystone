@@ -20,7 +20,12 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-config.set_main_option("sqlalchemy.url", settings.database_url)
+config.set_main_option(
+    "sqlalchemy.url", settings.database_url.replace("sqlite+aiosqlite", "sqlite")
+)
+
+print("Tables in metadata:", list(Base.metadata.tables.keys()))
+
 target_metadata = Base.metadata
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -61,16 +66,31 @@ async def run_migrations_online() -> None:
     """
 
     def do_run_migrations(connection):
-        context.configure(connection=connection, target_metadata=target_metadata)
+        print("Connected to:", connection.engine.url)
+        print("Existing tables:", connection.engine.dialect.get_table_names(connection))
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+            render_as_batch=True,
+        )
         with context.begin_transaction():
+            print("Connected to:", connection.engine.url)
             context.run_migrations()
 
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    from sqlalchemy.ext.asyncio import create_async_engine
+
+    connectable = create_async_engine(
+        settings.database_url,
         poolclass=pool.NullPool,
     )
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
 
     await connectable.dispose()
+
+
+if context.is_offline_mode():
+    run_migrations_offline()
+else:
+    asyncio.run(run_migrations_online())
