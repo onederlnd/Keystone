@@ -267,51 +267,56 @@ These apply across every phase. Every decision about status modeling, service de
 
 ### 4.1 Models & Templates
 
-- [ ] `app/models/document.py`
-  - [ ] `id`, `listing_id`, `contact_id`, `pipeline_id`, `created_by_id`, `type`, `status`, `file_path`, timestamps
-  - [ ] `generated_by` str — `manual` or `automation`
-- [ ] Alembic migration
-- [ ] `app/templates/offer_letter.html`, `listing_agreement.html`, `buyer_rep_agreement.html`
+- [x] `app/models/document.py`
+  - [x] `id`, `listing_id`, `contact_id`, `pipeline_id`, `created_by_id`, `type`, `status`, `file_path`, timestamps
+  - [x] `generated_by` str — `manual` or `automation`
+- [x] Alembic migration
+- [x] `app/templates/offer_letter.html`, `listing_agreement.html`, `buyer_rep_agreement.html`, `closing_summary.html`
 
-### 4.2 Schemas
+### .2 Schemas
 
-- [ ] `DocumentGenerateRequest`, `DocumentRead`, `DocumentStatusUpdate`
+- [x] `DocumentGenerateRequest`, `DocumentRead`, `DocumentStatusUpdate`
 
 ### 4.3 Service & Routes
 
-- [ ] `app/services/document_service.py`
-  - [ ] `render_template`, `generate_pdf`, `save_pdf_to_disk`, `create_document_record`
-  - [ ] `get_document`, `list_documents`
-  - [ ] `update_status(db, id, new_status, triggered_by="manual")`
-    - [ ] Validates via `DOCUMENT_MACHINE.can_transition()`
-    - [ ] On `sent`: fires `document.sent` hook
-    - [ ] On `signed`: fires `document.signed` hook
-    - [ ] Writes audit log on every transition
-- [ ] `app/routers/documents.py` — generate, list, get, download, status update, void
+- [x] `app/services/document_service.py`
+  - [x] `render_template`, `generate_pdf`, `save_pdf_to_disk`, `create_document_record`
+  - [x] `get_document`, `list_documents`
+  - [x] `update_status(db, id, new_status, triggered_by="manual")`
+    - [x] Validates via `DOCUMENT_MACHINE.can_transition()`
+    - [x] On `sent`: fires `document.sent` hook
+    - [x] On `signed`: fires `document.signed` hook
+    - [x] Writes audit log on every transition
+- [x] `app/routers/documents.py` — generate, list, get, download, status update, void
 
 ### 4.4 Automation Hooks
 
-- [ ] Register hook on `pipeline.offer_submitted` → auto-generate `offer_letter`, write to `approval_queue` for agent review before sending
-- [ ] Register hook on `listing.active` → auto-generate `listing_agreement`, queue for review
-- [ ] Register hook on `pipeline.closed` → auto-generate closing summary, queue for review
-- [ ] `document.sent` hook → placeholder for notification task
+- [x] _generate_and_queue_document - shared implementation for automation hooks
+
+- [x] Register hook on `pipeline.offer_submitted` → auto-generate `offer_letter`, write to `approval_queue` for agent review before sending
+
+- [x] Register hook on `listing.active` → auto-generate `listing_agreement`, queue for review
+
+- [x] Register hook on `pipeline.closed` → auto-generate closing summary, queue for review
+
+- [x] `document.sent` hook → placeholder for notification task
 
 ### 4.5 Tests
 
-- [ ] `tests/test_documents.py` — PDF generation, download, status transitions, auth
-- [ ] `tests/test_document_hooks.py`
-  - [ ] `pipeline.offer_submitted` event triggers document auto-generation
-  - [ ] Generated document lands in `approval_queue` before being marked `sent`
-  - [ ] Agent approval of queue entry transitions document to `sent`
-  - [ ] `listing.active` event triggers `listing_agreement` generation
+- [x] `tests/test_documents.py` — PDF generation, download, status transitions, auth
+- [x] `tests/test_document_hooks.py`
+  - [x] `pipeline.offer_submitted` event triggers document auto-generation
+  - [x] Generated document lands in `approval_queue` before being marked `sent`
+  - [x] Agent approval of queue entry transitions document to `sent`
+  - [x] `listing.active` event triggers `listing_agreement` generation
 
 ### Phase 4 Completion Criteria
 
-- [ ] PDF generates from all three template types
-- [ ] Auto-generation fires on correct pipeline/listing events
-- [ ] Generated docs require agent approval before delivery
-- [ ] `DOCUMENT_MACHINE` enforces valid transitions
-- [ ] `pytest tests/test_documents.py tests/test_document_hooks.py -v` — all green
+- [x] PDF generates from all three template types
+- [x] Auto-generation fires on correct pipeline/listing events
+- [x] Generated docs require agent approval before delivery
+- [x] `DOCUMENT_MACHINE` enforces valid transitions
+- [x] `pytest tests/test_documents.py tests/test_document_hooks.py -v` — all green
 
 ---
 

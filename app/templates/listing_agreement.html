@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { font-family: 'Helvetica', sans-serif; font-size: 12pt; color: #1a1a1a; line-height: 1.5; }
+  h1 { font-size: 16pt; border-bottom: 2px solid #333; padding-bottom: 8px; }
+  .meta { margin: 20px 0; }
+  .meta div { margin-bottom: 4px; }
+  .signature-block { margin-top: 60px; display: flex; justify-content: space-between; }
+  .signature-line { border-top: 1px solid #333; width: 250px; padding-top: 4px; }
+</style>
+</head>
+<body>
+  <h1>Exclusive Listing Agreement</h1>
+
+  <div class="meta">
+    <div><strong>Property Address:</strong> {{ listing.address }}, {{ listing.city }}, {{ listing.state }} {{ listing.zip }}</div>
+    <div><strong>Listing Price:</strong> ${{ "{:,.2f}".format(listing.price) }}</div>
+    <div><strong>Bedrooms / Bathrooms:</strong> {{ listing.bedrooms }} / {{ listing.bathrooms }}</div>
+    <div><strong>Square Footage:</strong> {{ listing.sqft }} sqft</div>
+    <div><strong>MLS ID:</strong> {{ listing.mls_id }}</div>
+    <div><strong>Seller:</strong> {{ seller.full_name }}</div>
+    <div><strong>Listing Agent:</strong> {{ agent.full_name }}</div>
+    <div><strong>Date:</strong> {{ generated_date }}</div>
+  </div>
+
+  <p>
+    The Seller grants the Agent the exclusive right to market and sell the above-referenced property
+    under the terms to be negotiated between the parties.
+  </p>
+
+  {% if listing.description %}
+  <p><strong>Property Description:</strong> {{ listing.description }}</p>
+  {% endif %}
+
+  <div class="signature-block">
+    <div class="signature-line">Seller Signature</div>
+    <div class="signature-line">Agent Signature</div>
+  </div>
+</body>
+</html>

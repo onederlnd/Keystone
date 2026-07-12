@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy import select
 
 from app.models.user import UserRole
-from app.models.pipeline import Pipeline
+from app.models.pipeline import Pipelines
 from app.models.approval_queue import ApprovalQueue
 
 
@@ -90,7 +90,7 @@ async def test_valid_stage_transition_applies(
     assert response.status_code == 200
     assert response.json()["stage"] == "contacted"
 
-    result = await db_session.execute(select(Pipeline).where(Pipeline.id == entry.id))
+    result = await db_session.execute(select(Pipelines).where(Pipelines.id == entry.id))
     updated = result.scalar_one_or_none()
     assert updated.stage == "contacted"
     assert updated.last_stage_change_at is not None
@@ -135,5 +135,5 @@ async def test_remove_pipeline_entry(client, create_pipeline_in_db, db_session):
     response = await client.patch(f"/pipeline/{entry.id}/remove")
     assert response.status_code == 200
 
-    result = await db_session.execute(select(Pipeline).where(Pipeline.id == entry.id))
+    result = await db_session.execute(select(Pipelines).where(Pipelines.id == entry.id))
     assert result.scalar_one_or_none() is None

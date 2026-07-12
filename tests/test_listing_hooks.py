@@ -1,7 +1,7 @@
 # tests/test_listing_hooks.py
 
 import uuid
-from unittest.mock import Mock
+from unittest.mock import AsyncMock
 
 import pytest
 from sqlalchemy import select
@@ -15,7 +15,7 @@ from app.core.config import settings
 async def test_status_change_fires_hook_with_correct_event_and_context(
     client, create_listing_in_db, create_user_in_db, monkeypatch
 ):
-    mock_fire_hook = Mock()
+    mock_fire_hook = AsyncMock()
     monkeypatch.setattr("app.services.listing.fire_hook", mock_fire_hook)
 
     listing = await create_listing_in_db()
@@ -45,7 +45,7 @@ async def test_automation_disabled_hook_is_noop(
 ):
     monkeypatch.setattr(settings, "automation_enabled", False)
 
-    side_effect_spy = Mock()
+    side_effect_spy = AsyncMock()
     from app.automation.hooks import register_hook
 
     register_hook("listing.active", side_effect_spy)

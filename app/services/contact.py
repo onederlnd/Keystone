@@ -4,13 +4,13 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.automation.hooks import fire_hook
-from app.models.contact import Contact
+from app.models.contact import Contacts
 from app.models.audit_log import AuditLog
-from app.schemas.contact import ContactCreate, ContactRead, ContactUpdate
+from app.schemas.contact import ContactCreate, ContactUpdate
 
 
 async def create_contact(db: AsyncSession, data: ContactCreate):
-    contact = Contact(**data.model_dump())
+    contact = Contacts(**data.model_dump())
     db.add(contact)
 
     try:
@@ -22,7 +22,7 @@ async def create_contact(db: AsyncSession, data: ContactCreate):
     await db.refresh(contact)
 
     context = {"contact_id": str(contact.id), "agent_id": str(contact.agent_id)}
-    fire_hook("contact.created", context)
+    await fire_hook("contact.created", context)
 
     log = AuditLog(
         entity_type="contact",
@@ -38,11 +38,11 @@ async def create_contact(db: AsyncSession, data: ContactCreate):
 
 
 async def get_contact(db: AsyncSession, contact_id: uuid.UUID, current_user):
-    result = await db.execute(select(Contact).where(Contact.id == contact_id))
+    result = await db.execute(select(Contacts).where(Contacts.id == contact_id))
     contact = result.scalar_one_or_none()
 
-    if not contact:
-        return None
+    if contact is None:
+        return
 
     if current_user.role != "admin" and contact.agent_id != current_user.id:
         raise HTTPException(403, "Not authorized to access this contact")
@@ -53,11 +53,11 @@ async def get_contact(db: AsyncSession, contact_id: uuid.UUID, current_user):
 async def update_contact(
     db: AsyncSession, contact_id: uuid.UUID, data: ContactUpdate, current_user
 ):
-    result = await db.execute(select(Contact).where(Contact.id == contact_id))
+    result = await db.execute(select(Contacts).where(Contacts.id == contact_id))
     contact = result.scalar_one_or_none()
 
-    if not contact:
-        return None
+    if contact is None:
+        return
 
     if current_user.role != "admin" and contact.agent_id != current_user.id:
         raise HTTPException(403, "Not authorized to modify this contact")
@@ -73,11 +73,11 @@ async def update_contact(
 
 
 async def archive_contact(db: AsyncSession, contact_id: uuid.UUID, current_user):
-    result = await db.execute(select(Contact).where(Contact.id == contact_id))
+    result = await db.execute(select(Contacts).where(Contacts.id == contact_id))
     contact = result.scalar_one_or_none()
 
-    if not contact:
-        return None
+    if contact is None:
+        return
 
     if current_user.role != "admin" and contact.agent_id != current_user.id:
         raise HTTPException(403, "Not authorized to access this contact")
@@ -100,13 +100,13 @@ async def archive_contact(db: AsyncSession, contact_id: uuid.UUID, current_user)
 
 
 async def list_contacts(db: AsyncSession, current_user, type: str | None = None):
-    query = select(Contact)
+    query = select(Contacts)
 
     if current_user.role != "admin":
-        query = query.where(Contact.agent_id == current_user.id)
+        query = query.where(Contacts.agent_id == current_user.id)
 
     if type is not None:
-        query = query.where(Contact.type == type)
+        query = query.where(Contacts.type == type)
 
     result = await db.execute(query)
 

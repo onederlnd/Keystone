@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     # Keys
     secret_key: str
 
+    # Documents
+    generated_docs_dir: str
+
     # Tokens
     access_token_expire_minutes: int = 30
     redis_url: str = ""

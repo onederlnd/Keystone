@@ -1,7 +1,7 @@
 # tests/test_pipeline_hooks.py
 
 from datetime import datetime, timezone, timedelta
-from unittest.mock import Mock
+from unittest.mock import AsyncMock
 import pytest
 from sqlalchemy import select
 from app.models.approval_queue import ApprovalQueue
@@ -12,7 +12,7 @@ from app.services.pipeline import get_stale_pipeline_entries
 async def test_offer_submitted_fires_correct_hook(
     client, create_pipeline_in_db, monkeypatch
 ):
-    mock_fire_hook = Mock()
+    mock_fire_hook = AsyncMock()
     monkeypatch.setattr("app.services.pipeline.fire_hook", mock_fire_hook)
 
     entry = await create_pipeline_in_db(stage="showing_scheduled")
@@ -33,7 +33,7 @@ async def test_offer_submitted_fires_correct_hook(
 async def test_closed_transition_queues_for_approval_no_hook_fired(
     client, create_pipeline_in_db, db_session, monkeypatch
 ):
-    mock_fire_hook = Mock()
+    mock_fire_hook = AsyncMock()
     monkeypatch.setattr("app.services.pipeline.fire_hook", mock_fire_hook)
 
     entry = await create_pipeline_in_db(stage="under_contract")

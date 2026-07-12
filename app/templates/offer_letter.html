@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { font-family: 'Helvetica', sans-serif; font-size: 12pt; color: #1a1a1a; line-height: 1.5; }
+  h1 { font-size: 16pt; border-bottom: 2px solid #333; padding-bottom: 8px; }
+  .meta { margin: 20px 0; }
+  .meta div { margin-bottom: 4px; }
+  .signature-block { margin-top: 60px; }
+  .signature-line { border-top: 1px solid #333; width: 250px; margin-top: 40px; padding-top: 4px; }
+</style>
+</head>
+<body>
+  <h1>Offer to Purchase Real Estate</h1>
+
+  <div class="meta">
+    <div><strong>Property Address:</strong> {{ listing.address }}, {{ listing.city }}, {{ listing.state }} {{ listing.zip }}</div>
+    <div><strong>Listing Price:</strong> ${{ "{:,.2f}".format(listing.price) }}</div>
+    <div><strong>Offer Price:</strong> ${{ "{:,.2f}".format(pipeline.offer_price) }}</div>
+    <div><strong>Buyer:</strong> {{ contact.full_name }}</div>
+    <div><strong>Agent:</strong> {{ agent.full_name }}</div>
+    <div><strong>Date:</strong> {{ generated_date }}</div>
+  </div>
+
+  <p>
+    This letter confirms an offer to purchase the above-referenced property at the stated offer price,
+    subject to the terms and conditions to be outlined in the accompanying purchase agreement.
+  </p>
+
+  {% if pipeline.notes %}
+  <p><strong>Additional Notes:</strong> {{ pipeline.notes }}</p>
+  {% endif %}
+
+  <div class="signature-block">
+    <div class="signature-line">Buyer Signature</div>
+    <div class="signature-line">Date</div>
+  </div>
+</body>
+</html>

@@ -4,16 +4,26 @@ import uuid
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-
+from sqlalchemy.pool import StaticPool
 from app.main import app
 from app.core.database import Base, get_db
-from app.models.user import User, UserRole
-from app.models.pipeline import Pipeline
 from app.core.security import hash_password, create_access_token
+from app.models.user import Users, UserRole
+from app.models.pipeline import Pipelines
+from app.models.contact import Contacts
+from app.models.listing import Listings
+
+
+from app.models.document import Documents
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
-engine = create_async_engine(TEST_DATABASE_URL, echo=False)
+engine = create_async_engine(
+    TEST_DATABASE_URL,
+    echo=False,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
 TestSessionLocal = async_sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False
 )
@@ -62,7 +72,7 @@ async def create_user_in_db(db_session):
     async def _create(
         email="test@test.com", password="password123", role=UserRole.buyer
     ):
-        user = User(
+        user = Users(
             email=email,
             hashed_password=hash_password(password),
             full_name="Test User",
@@ -88,7 +98,6 @@ async def create_listing_in_db(db_session, create_user_in_db):
             seller = await create_user_in_db(
                 email=f"seller-{uuid.uuid4()}@test.com", role=UserRole.seller
             )
-        from app.models.listing import Listing
 
         defaults = {
             "agent_id": agent.id,
@@ -104,7 +113,7 @@ async def create_listing_in_db(db_session, create_user_in_db):
             "mls_id": f"MLS-{uuid.uuid4()}",
         }
         defaults.update(overrides)
-        listing = Listing(**defaults)
+        listing = Listings(**defaults)
 
         db_session.add(listing)
 
@@ -121,9 +130,8 @@ async def create_pipeline_in_db(db_session, create_listing_in_db, create_user_in
     async def _create(stage="new", **overrides):
         listing = await create_listing_in_db()
         agent = await create_user_in_db(email=f"pipe-agent-{uuid.uuid4()}@test.com")
-        from app.models.contact import Contact
 
-        contact = Contact(
+        contact = Contacts(
             agent_id=agent.id,
             user_id=agent.id,
             full_name="Pipeline Lead",
@@ -143,7 +151,7 @@ async def create_pipeline_in_db(db_session, create_listing_in_db, create_user_in
             "stage": stage,
         }
         defaults.update(overrides)
-        entry = Pipeline(**defaults)
+        entry = Pipelines(**defaults)
         db_session.add(entry)
         await db_session.commit()
         await db_session.refresh(entry)
@@ -159,7 +167,6 @@ async def create_contact_in_db(db_session, create_user_in_db):
             agent = await create_user_in_db(
                 email=f"agent-{uuid.uuid4()}@test.com", role=UserRole.agent
             )
-        from app.models.contact import Contact
 
         defaults = {
             "agent_id": agent.id,
@@ -171,11 +178,57 @@ async def create_contact_in_db(db_session, create_user_in_db):
             "source": "website",
         }
         defaults.update(overrides)
-        contact = Contact(**defaults)
+        contact = Contacts(**defaults)
+
         db_session.add(contact)
+
         await db_session.commit()
         await db_session.refresh(contact)
+
         return contact, agent
+
+    return _create
+
+
+@pytest_asyncio.fixture
+async def create_document_in_db(
+    db_session,
+    create_listing_in_db,
+    create_contact_in_db,
+    create_pipeline_in_db,
+    create_user_in_db,
+):
+    async def _create(
+        created_by=None, listing=None, contact=None, pipeline=None, **overrides
+    ):
+        if created_by is None:
+            created_by = await create_user_in_db(
+                email=f"doc-owner-{uuid.uuid4()}@test.com", role=UserRole.agent
+            )
+        if listing is None:
+            listing = await create_listing_in_db()
+        if contact is None:
+            contact, _ = await create_contact_in_db()
+        if pipeline is None:
+            pipeline = await create_pipeline_in_db()
+
+        defaults = {
+            "id": uuid.uuid4(),
+            "listing_id": listing.id,
+            "contact_id": contact.id,
+            "pipeline_id": pipeline.id,
+            "created_by_id": created_by.id,
+            "type": "listing_agreement",
+            "file_path": f"/tmp/{uuid.uuid4()}.pdf",
+            "generated_by": "manual",
+            "status": "draft",
+        }
+        defaults.update(overrides)
+        document = Documents(**defaults)
+        db_session.add(document)
+        await db_session.commit()
+        await db_session.refresh(document)
+        return document, created_by
 
     return _create
 
@@ -187,3 +240,15 @@ def reset_hook_registry():
     REGISTRY.clear()
     yield
     REGISTRY.clear()
+
+
+@pytest_asyncio.fixture
+async def patch_async_session_local(monkeypatch):
+    """
+    Hooks (document_hooks.py, pipeline_hooks.py) open their own session via
+    app.core.database.AsyncSessionLocal instead of reusing a request-scoped
+    session. Point that sessionmaker at the test engine, or hook writes land
+    in an unrelated database.
+    """
+    monkeypatch.setattr("app.core.database.AsyncSessionLocal", TestSessionLocal)
+    yield

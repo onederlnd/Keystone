@@ -1,0 +1,52 @@
+<!-- app/templates/closing_summary.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #1a1a1a; margin: 60px; }
+        h1 { font-size: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .meta { color: #555; font-size: 12px; margin-bottom: 30px; }
+        .section { margin-bottom: 24px; }
+        .label { font-weight: bold; display: inline-block; width: 160px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        td { padding: 6px 0; border-bottom: 1px solid #eee; }
+        .highlight { font-size: 16px; font-weight: bold; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Transaction Closing Summary</h1>
+    <div class="meta">Generated {{ generated_at }} &middot; Document ID: {{ document_id }}</div>
+
+    <div class="section">
+        <table>
+            <tr><td class="label">Property Address</td><td>{{ listing.address }}, {{ listing.city }}, {{ listing.state }} {{ listing.zip }}</td></tr>
+            <tr><td class="label">MLS ID</td><td>{{ listing.mls_id }}</td></tr>
+            <tr><td class="label">List Price</td><td>${{ "{:,.2f}".format(listing.price) }}</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <table>
+            <tr><td class="label">Buyer/Client</td><td>{{ contact.full_name }}</td></tr>
+            <tr><td class="label">Contact Email</td><td>{{ contact.email }}</td></tr>
+            <tr><td class="label">Listing Agent</td><td>{{ agent.full_name }}</td></tr>
+        </table>
+    </div>
+
+    <div class="section">
+        <table>
+            <tr><td class="label">Final Sale Price</td><td>${{ "{:,.2f}".format(pipeline.offer_price) }}</td></tr>
+            <tr><td class="label">Pipeline Stage</td><td>{{ pipeline.stage }}</td></tr>
+        </table>
+        <div class="highlight">Transaction Closed</div>
+    </div>
+
+    {% if pipeline.notes %}
+    <div class="section">
+        <div class="label">Notes</div>
+        <p>{{ pipeline.notes }}</p>
+    </div>
+    {% endif %}
+</body>
+</html>

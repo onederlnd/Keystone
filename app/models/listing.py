@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from app.models.listing_status_history import ListingStatusHistory
 
 
-class Listing(TimestampMixin, Base):
+class Listings(TimestampMixin, Base):
     __tablename__ = "listings"
     id: Mapped[uuid.UUID] = mapped_column(
         primary_key=True, default=uuid.uuid4, nullable=False

@@ -8,8 +8,8 @@ from app.core.database import Base
 from app.models.mixins import TimestampMixin
 
 
-class Pipeline(TimestampMixin, Base):
-    __tablename__ = "pipeline"
+class Pipelines(TimestampMixin, Base):
+    __tablename__ = "pipelines"
     __table_args__ = (UniqueConstraint("listing_id", "contact_id"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -19,7 +19,7 @@ class Pipeline(TimestampMixin, Base):
         ForeignKey("listings.id"), nullable=False
     )
     contact_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("contact.id"), nullable=False
+        ForeignKey("contacts.id"), nullable=False
     )
     agent_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
     stage: Mapped[str] = mapped_column(nullable=False)

@@ -7,13 +7,13 @@ from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_role
 from app.schemas.user import UserRead, UserUpdate
 from app.services.user import get_user_by_id, update_user, deactivate_user
-from app.models.user import User
+from app.models.user import Users
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.get("/me", response_model=UserRead)
-async def me(current_user: User = Depends(get_current_user)):
+async def me(current_user: Users = Depends(get_current_user)):
     return current_user
 
 
@@ -21,7 +21,7 @@ async def me(current_user: User = Depends(get_current_user)):
 async def get_user(
     id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: Users = Depends(get_current_user),
 ):
     user = await get_user_by_id(db, id)
     if not user:
@@ -34,7 +34,7 @@ async def patch_user(
     id: uuid.UUID,
     user_data: UserUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: Users = Depends(get_current_user),
 ):
     user = await update_user(db, id, user_data)
     if not user:
@@ -46,7 +46,7 @@ async def patch_user(
 async def delete_user(
     id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(require_role("admin")),
+    current_user: Users = Depends(require_role("admin")),
 ):
     user = await deactivate_user(db, id)
     if not user:

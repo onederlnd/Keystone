@@ -5,7 +5,7 @@ import pytest
 from sqlalchemy import select
 
 from app.models.user import UserRole
-from app.models.contact import Contact
+from app.models.contact import Contacts
 from app.core.security import create_access_token
 
 
@@ -111,7 +111,7 @@ async def test_archive_contact_owner(client, create_contact_in_db, db_session):
     )
     assert response.status_code == 200
 
-    result = await db_session.execute(select(Contact).where(Contact.id == contact.id))
+    result = await db_session.execute(select(Contacts).where(Contacts.id == contact.id))
     updated = result.scalar_one_or_none()
     assert updated.is_archived is True
 

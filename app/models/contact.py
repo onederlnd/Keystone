@@ -7,8 +7,8 @@ from app.core.database import Base
 from app.models.mixins import TimestampMixin
 
 
-class Contact(TimestampMixin, Base):
-    __tablename__ = "contact"
+class Contacts(TimestampMixin, Base):
+    __tablename__ = "contacts"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     agent_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
     user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)

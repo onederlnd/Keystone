@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.state_machine import LISTING_MACHINE
 from app.models.listing_status_history import ListingStatusHistory
-from app.models.listing import Listing
+from app.models.listing import Listings
 from app.models.approval_queue import ApprovalQueue
 from app.schemas.listing import (
     ListingCreate,
@@ -18,7 +18,7 @@ from app.automation.hooks import fire_hook
 
 
 async def create_listing(db: AsyncSession, data: ListingCreate):
-    listing = Listing(**data.model_dump())
+    listing = Listings(**data.model_dump())
 
     db.add(listing)
 
@@ -45,16 +45,16 @@ async def create_listing(db: AsyncSession, data: ListingCreate):
 
 
 async def get_listing(db: AsyncSession, listing_id: uuid.UUID):
-    result = await db.execute(select(Listing).where(Listing.id == listing_id))
+    result = await db.execute(select(Listings).where(Listings.id == listing_id))
     return result.scalar_one_or_none()
 
 
 async def update_listing(db: AsyncSession, listing_id: uuid.UUID, data: ListingUpdate):
-    result = await db.execute(select(Listing).where(Listing.id == listing_id))
+    result = await db.execute(select(Listings).where(Listings.id == listing_id))
     listing = result.scalar_one_or_none()
 
-    if not listing:
-        return None
+    if listing is None:
+        return
 
     model = data.model_dump(exclude_unset=True)
     for k, v in model.items():
@@ -67,11 +67,11 @@ async def update_listing(db: AsyncSession, listing_id: uuid.UUID, data: ListingU
 
 
 async def archive_listing(db: AsyncSession, listing_id: uuid.UUID):
-    result = await db.execute(select(Listing).where(Listing.id == listing_id))
+    result = await db.execute(select(Listings).where(Listings.id == listing_id))
     listing = result.scalar_one_or_none()
 
-    if not listing:
-        return None
+    if listing is None:
+        return
 
     listing.status = "archived"
 
@@ -90,18 +90,18 @@ async def archive_listing(db: AsyncSession, listing_id: uuid.UUID):
 
 
 async def list_listings(db: AsyncSession, data: ListingFilterParams):
-    query = select(Listing)
+    query = select(Listings)
 
     model = data.model_dump(exclude_unset=True)
 
     for k, v in model.items():
         if k == "max_price" and v is not None:
-            query = query.where(Listing.price <= v)
+            query = query.where(Listings.price <= v)
         elif k == "min_price" and v is not None:
-            query = query.where(Listing.price >= v)
+            query = query.where(Listings.price >= v)
         else:
             if v is not None:
-                query = query.where(getattr(Listing, k) == v)
+                query = query.where(getattr(Listings, k) == v)
 
     result = await db.execute(query)
 
@@ -118,14 +118,14 @@ async def change_status(
     changed_by_id: uuid.UUID,
     triggered_by="manual",
 ):
-    result = await db.execute(select(Listing).where(Listing.id == listing_id))
+    result = await db.execute(select(Listings).where(Listings.id == listing_id))
 
     listing = result.scalar_one_or_none()
-    if not listing:
+    if listing is None:
         raise HTTPException(404, "Listing not found")
 
     transition = LISTING_MACHINE.get_transition(listing.status, new_status)
-    if not transition:
+    if transition is None:
         raise HTTPException(
             400, f"Cannot transition from {listing.status} to {new_status}"
         )
@@ -174,7 +174,7 @@ async def change_status(
             "changed_by_id": str(changed_by_id),
         }
 
-        fire_hook(f"listing.{new_status}", context)
+        await fire_hook(f"listing.{new_status}", context)
 
     await db.commit()
 

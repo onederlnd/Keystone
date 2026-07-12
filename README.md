@@ -6,28 +6,55 @@ The long-term goal is near-full automation: Keystone drives the transaction, age
 
 ---
 
-## What Keystone Does
+## Where Things Stand
 
-**Listing Management**
-Agents create and manage property listings with full status history. Every status transition is governed by a state machine — Active, Under Contract, Pending, Closed — and each change is timestamped, logged, and optionally automated based on pipeline events.
+**Phases 1–3 are complete and fully tested.** That means the foundation — auth, roles, listings, contacts, and the deal pipeline — is live and working end-to-end, including the automation scaffolding (state machines, audit logging, and the approval queue) that later phases will build on.
 
-**CRM & Pipeline**
-Contacts (buyers, sellers, leads) live in a built-in CRM tied to a deal pipeline. Agents track where every relationship stands, and the system can automatically advance pipeline stages, flag stale deals, and queue next actions based on configurable rules.
+**Not yet built:** document generation, market analytics, notifications, and the automation rule engine itself (Phases 4–7). The infrastructure for all of them already exists in the codebase — hooks, the approval queue, audit logging — so building these phases is additive work, not rework.
 
-**Document Generation**
-Common real estate documents — offers, disclosures, listing agreements, buyer rep agreements — are generated automatically at the right pipeline stage, pre-filled from existing data, and queued for agent review before delivery. No manual triggering required.
+| Phase | Module | Status |
+| --- | --- | --- |
+| 1 | Scaffold + Auth + Users/Roles + State Machine Foundation | ✅ Complete |
+| 2 | Listings + Status History + Transition Hooks | ✅ Complete |
+| 3 | Contacts & CRM Pipeline + Stage Automation Hooks | ✅ Complete |
+| 4 | Document Generation + Auto-Generate on Pipeline Stage | ✅ Complete |
+| 5 | Market Analysis + Analytics-Driven Automation Triggers | ⬜ Not Started |
+| 6 | Notifications as Automation Byproduct | ⬜ Not Started |
+| 7 | Automation Engine + Approval Queue + Override Logs | ⬜ Not Started |
 
-**Market Analysis & Reporting**
-Agents and admins pull market-level reports: average days on market, price trends by area, listing volume over time. Analytics also feed back into the automation layer — stale listings get flagged, underpriced comps surface automatically.
+See `WORK_OUTLINE.md` for the detailed, file-level build checklist behind each phase.
 
-**Automation Engine**
-The core of Keystone's long-term vision. A rule-based engine monitors transaction state and triggers actions — document generation, notifications, stage transitions, follow-up scheduling — without agent input. An approval queue surfaces anything that needs a human decision before firing.
+---
 
-**Role-Based Access**
-Admins have full access. Agents manage their own book of business. Buyers and sellers each see a focused view — their listings, their documents, their pipeline status — nothing more.
+## What Keystone Does Today
 
-**Notifications**
-Automated email and SMS notifications keep all parties informed at key moments: listing status changes, document delivery, pipeline stage advances, and upcoming deadlines. Notifications are a byproduct of the automation engine, not a standalone feature.
+**Auth & Roles** — JWT-based login, four roles (`admin`, `agent`, `buyer`, `seller`), with role and ownership checks enforced on every protected route.
+
+**Listing Management** — Agents create and manage property listings with full status history. Every status change (Active, Pending, Under Contract, Sold, Off Market) goes through a state machine that rejects invalid transitions outright. Each change is timestamped and logged, and higher-stakes transitions (e.g. moving to Under Contract) are held for agent approval rather than applied automatically.
+
+**CRM & Pipeline** — Contacts (buyers, sellers, leads) live in a built-in CRM tied to a deal pipeline, scoped so agents only see their own book of business (admins see everything). Pipeline stages — New, Contacted, Showing Scheduled, Offer Submitted, Negotiating, Under Contract, Closed, Lost — follow the same state-machine-and-approval pattern as listings. Stale deals (no stage movement in N days) can be surfaced on a schedule.
+
+## What's Coming Next (Phases 4–7)
+
+**Document Generation** — Offers, disclosures, listing agreements, and buyer rep agreements generated automatically at the right pipeline stage, pre-filled from existing data, and queued for agent review before delivery.
+
+**Market Analysis & Reporting** — Comps, days-on-market, price-per-sqft, and agent performance summaries. Analytics will also feed back into automation — stale listings and mispriced comps flagged automatically.
+
+**Automation Engine** — The core of Keystone's long-term vision. A rule-based engine will monitor transaction state and trigger actions — document generation, notifications, stage transitions — without agent input. Anything with real stakes routes through the approval queue for a human decision first.
+
+**Notifications** — Automated email (and SMS) at key moments: listing status changes, document delivery, pipeline advances. These will be a byproduct of the automation engine firing, not a separate feature to build and maintain.
+
+---
+
+## How the Automation Model Works
+
+This is the architectural backbone that every phase builds on, so it's worth understanding even if you're not writing code:
+
+- **State machines** — every entity with a status (listings, pipeline entries, documents) has an explicit list of valid transitions. You can't move a listing from "Draft" straight to "Sold" — the system won't allow it.
+- **Hooks, not hardcoding** — when a valid transition happens, the system emits an event (e.g. `listing.active`). Automation rules subscribe to these events rather than being wired directly into business logic — this is what lets Phase 7's rule engine slot in later without rewriting Phases 2–6.
+- **Approval queue** — some transitions are flagged as requiring human review regardless of who or what initiated them. Instead of applying immediately, they're written to a queue for an agent to approve, modify, or reject. This applies uniformly — a human clicking a button doesn't skip the same review an automated action would need.
+- **Audit trail** — every transition, manual or automated, is logged: what changed, who or what triggered it, and when.
+- **Kill switch** — a single `AUTOMATION_ENABLED` flag. When off, hooks are still registered but never fire — the platform runs in fully manual mode with zero behavior change to the rest of the system. This is what makes it safe to build and test the automation layer incrementally without risking the live manual workflow.
 
 ---
 
@@ -119,7 +146,7 @@ SMTP_PASS=your-mailtrap-pass
 AUTOMATION_ENABLED=false
 ```
 
-> `AUTOMATION_ENABLED` is a kill switch. When `false`, all automation rules are skipped and the platform operates in fully manual mode. Flip to `true` to activate the rule engine.
+> `AUTOMATION_ENABLED` is a kill switch. When `false`, all automation rules are skipped and the platform operates in fully manual mode. Flip to `true` to activate the rule engine (Phase 7).
 
 ---
 
@@ -127,38 +154,10 @@ AUTOMATION_ENABLED=false
 
 | Role | Access |
 | --- | --- |
-| `admin` | Full platform access, automation rule management |
-| `agent` | Listings, contacts, documents, pipeline, approval queue |
+| `admin` | Full platform access, bypasses ownership checks on contacts/listings, automation rule management |
+| `agent` | Own listings, contacts, documents, pipeline, approval queue |
 | `buyer` | Own profile, assigned listings, documents |
 | `seller` | Own listings, pipeline status, documents |
-
----
-
-## Automation Overview
-
-Keystone is built toward a model where the system drives transactions and humans oversee. The automation layer is introduced incrementally — infrastructure is laid in early phases so it can be activated in Phase 7 without refactoring.
-
-**Key concepts:**
-
-- **State machines** — every entity with a status (listings, pipeline entries, documents) has explicit valid transitions. Invalid moves are rejected at the service layer.
-- **Automation hooks** — each state transition exposes a hook. Rules registered to that hook fire automatically when the transition occurs.
-- **Approval queue** — high-stakes automated actions are not fired immediately. They're placed in a queue for agent review. Agents approve, modify, or reject. Anything not acted on within a configurable window can be auto-approved.
-- **Audit trail** — every automated action is logged with what triggered it, what it did, and who (if anyone) approved it. Required for compliance.
-- **Override log** — every time a human overrides or rejects an automated action, it's recorded. Over time this informs rule refinement.
-
----
-
-## Build Phases
-
-| Phase | Module | Status |
-| --- | --- | --- |
-| 1 | Scaffold + Auth + Users/Roles + State Machine Foundation | 🔄 In Progress |
-| 2 | Listings + Status History + Transition Hooks | ⬜ Not Started |
-| 3 | Contacts & CRM Pipeline + Stage Automation Hooks | ⬜ Not Started |
-| 4 | Document Generation + Auto-Generate on Pipeline Stage | ⬜ Not Started |
-| 5 | Market Analysis + Analytics-Driven Automation Triggers | ⬜ Not Started |
-| 6 | Notifications as Automation Byproduct | ⬜ Not Started |
-| 7 | Automation Engine + Approval Queue + Override Logs | ⬜ Not Started |
 
 ---
 
@@ -169,26 +168,29 @@ Keystone is built toward a model where the system drives transactions and humans
 pytest tests/ -v
 
 # By phase
-pytest tests/test_auth.py tests/test_users.py -v        # Phase 1
-pytest tests/test_listings.py -v                         # Phase 2
-pytest tests/test_contacts.py tests/test_pipeline.py -v # Phase 3
-pytest tests/test_documents.py -v                        # Phase 4
-pytest tests/test_analytics.py -v                        # Phase 5
-pytest tests/test_notifications.py -v                    # Phase 6
-pytest tests/test_automation.py -v                       # Phase 7
+pytest tests/test_auth.py tests/test_users.py -v                          # Phase 1
+pytest tests/test_listings.py tests/test_listing_hooks.py -v              # Phase 2
+pytest tests/test_contacts.py tests/test_pipeline.py tests/test_pipeline_hooks.py -v  # Phase 3
+pytest tests/test_documents.py -v                                         # Phase 4 (pending)
+pytest tests/test_analytics.py -v                                         # Phase 5 (pending)
+pytest tests/test_notifications.py -v                                     # Phase 6 (pending)
+pytest tests/test_automation.py -v                                        # Phase 7 (pending)
 ```
 
-All tests use an in-memory SQLite database via an async test client. Celery runs in eager mode during tests.
+All tests run against an in-memory SQLite database via an async test client. Celery runs in eager mode during tests.
 
 ---
 
-## Architecture Notes
+## Architecture Notes (for contributors)
 
-- All IDs are UUID, generated server-side
-- `created_at` / `updated_at` on every model via shared `TimestampMixin`
-- Role enforcement via FastAPI dependency (`require_role`), never inline in route handlers
-- Services own all business logic — routers stay thin
-- State machines defined centrally in `app/core/state_machine.py` and enforced at the service layer
-- Automation hooks are registered against state machine transitions, not hardcoded in services
-- Every automated action is written to the audit log before execution
-- `AUTOMATION_ENABLED=false` disables all rule engine execution without touching service logic
+- All IDs are UUID, generated server-side.
+- `created_at` / `updated_at` on every model via a shared `TimestampMixin`.
+- Role enforcement happens via a FastAPI dependency (`require_role` / `get_current_active_user`), never inline in route handlers.
+- Services own all business logic — routers stay thin (parse request, call service, return).
+- State machines are defined centrally in `app/core/state_machine.py` and enforced at the service layer, not in routers or models.
+- Automation hooks are registered against state machine transitions, not hardcoded inside service functions.
+- fire_hook supports async hook functions (inspect.iscoroutinefunction check (import inspect))
+- A transition marked `requires_approval` always queues for review, regardless of whether it was triggered manually or by automation — this is intentional and consistent across listings and pipeline.
+- Every state transition is written to the audit log before (or as part of) execution.
+- `AUTOMATION_ENABLED=false` disables all rule engine execution without touching service logic or requiring code changes elsewhere.
+- See `WORK_OUTLINE.md` for the authoritative, up-to-date build checklist — it tracks status at the file and function level and is the source of truth when this README and the code disagree.

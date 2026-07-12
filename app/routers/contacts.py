@@ -15,7 +15,7 @@ from app.schemas.contact import (
     ContactRead,
     ContactUpdate,
 )
-from app.models.user import User
+from app.models.user import Users
 
 router = APIRouter(prefix="/contacts", tags=["contact"])
 
@@ -29,7 +29,7 @@ async def create_contact_route(data: ContactCreate, db: AsyncSession = Depends(g
 async def get_contact_route(
     contact_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: Users = Depends(get_current_active_user),
 ):
     contact = await get_contact(db, contact_id, current_user)
     if not contact:
@@ -41,7 +41,7 @@ async def get_contact_route(
 async def list_contacts_routes(
     type: str | None = None,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: Users = Depends(get_current_active_user),
 ):
     return await list_contacts(db, current_user, type)
 
@@ -50,7 +50,7 @@ async def list_contacts_routes(
 async def update_contact_route(
     contact_id: uuid.UUID,
     data: ContactUpdate,
-    current_user: User = Depends(get_current_active_user),
+    current_user: Users = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db),
 ):
     contact = await update_contact(db, contact_id, data, current_user)
@@ -63,7 +63,7 @@ async def update_contact_route(
 async def archive_contact_route(
     contact_id: uuid.UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: Users = Depends(get_current_active_user),
 ):
     contact = await archive_contact(db, contact_id, current_user)
     if not contact:

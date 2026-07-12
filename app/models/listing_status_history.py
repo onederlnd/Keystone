@@ -9,7 +9,7 @@ from app.core.database import Base
 from app.models.mixins import TimestampMixin
 
 if TYPE_CHECKING:
-    from app.models.listing import Listing
+    from app.models.listing import Listings
 
 
 class ListingStatusHistory(TimestampMixin, Base):
@@ -25,6 +25,6 @@ class ListingStatusHistory(TimestampMixin, Base):
     )
     notes: Mapped[str] = mapped_column(nullable=True)
     triggered_by: Mapped[str] = mapped_column(nullable=False)  # manual or automatic
-    listing: Mapped["Listing"] = relationship(
-        "Listing", back_populates="status_history"
+    listing: Mapped["Listings"] = relationship(
+        "Listings", back_populates="status_history"
     )

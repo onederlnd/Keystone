@@ -5,12 +5,11 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.automation.hooks import fire_hook
-from app.models.pipeline import Pipeline
+from app.models.pipeline import Pipelines
 from app.models.audit_log import AuditLog
 from app.schemas.pipeline import (
     PipelineCreate,
     PipelineFilterParams,
-    PipelineRead,
     PipelineUpdate,
 )
 from app.core.state_machine import PIPELINE_MACHINE
@@ -18,7 +17,7 @@ from app.models.approval_queue import ApprovalQueue
 
 
 async def add_to_pipeline(db: AsyncSession, data: PipelineCreate):
-    pipeline = Pipeline(**data.model_dump())
+    pipeline = Pipelines(**data.model_dump())
     db.add(pipeline)
 
     try:
@@ -43,17 +42,17 @@ async def add_to_pipeline(db: AsyncSession, data: PipelineCreate):
 
 
 async def get_pipeline_entry(db: AsyncSession, pipeline_id: uuid.UUID):
-    result = await db.execute(select(Pipeline).where(Pipeline.id == pipeline_id))
+    result = await db.execute(select(Pipelines).where(Pipelines.id == pipeline_id))
     return result.scalar_one_or_none()
 
 
 async def list_pipeline(db: AsyncSession, data: PipelineFilterParams):
-    query = select(Pipeline)
+    query = select(Pipelines)
     model = data.model_dump(exclude_unset=True)
 
     for k, v in model.items():
         if v is not None:
-            query = query.where(getattr(Pipeline, k) == v)
+            query = query.where(getattr(Pipelines, k) == v)
 
     result = await db.execute(query)
 
@@ -63,11 +62,11 @@ async def list_pipeline(db: AsyncSession, data: PipelineFilterParams):
 
 
 async def remove_pipeline_entry(db: AsyncSession, pipeline_id: uuid.UUID):
-    result = await db.execute(select(Pipeline).where(Pipeline.id == pipeline_id))
+    result = await db.execute(select(Pipelines).where(Pipelines.id == pipeline_id))
     pipeline = result.scalar_one_or_none()
 
-    if not pipeline:
-        return None
+    if pipeline is None:
+        return
 
     log = AuditLog(
         entity_type="pipeline",
@@ -90,17 +89,17 @@ async def update_pipeline_entry(
     data: PipelineUpdate,
     triggered_by="manual",
 ):
-    result = await db.execute(select(Pipeline).where(Pipeline.id == pipeline_id))
+    result = await db.execute(select(Pipelines).where(Pipelines.id == pipeline_id))
     entry = result.scalar_one_or_none()
 
-    if not entry:
-        return None
+    if entry is None:
+        return
 
     from_stage = entry.stage
     to_stage = data.stage
 
     transition = PIPELINE_MACHINE.get_transition(from_stage, to_stage)
-    if not transition:
+    if transition is None:
         raise HTTPException(400, f"Cannot transition from {from_stage} to {to_stage}")
 
     model = data.model_dump(exclude_unset=True)
@@ -144,7 +143,7 @@ async def update_pipeline_entry(
         "from_stage": from_stage,
         "to_stage": to_stage,
     }
-    fire_hook(transition.automation_hook, context)
+    await fire_hook(transition.automation_hook, context)
 
     return entry
 
@@ -155,7 +154,7 @@ async def get_stale_pipeline_entries(db: AsyncSession, days_threshold: int):
     )
 
     result = await db.execute(
-        select(Pipeline).where(Pipeline.last_stage_change_at <= cutoff)
+        select(Pipelines).where(Pipelines.last_stage_change_at <= cutoff)
     )
 
     return result.scalars().all()

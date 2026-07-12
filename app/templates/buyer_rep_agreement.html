@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { font-family: 'Helvetica', sans-serif; font-size: 12pt; color: #1a1a1a; line-height: 1.5; }
+  h1 { font-size: 16pt; border-bottom: 2px solid #333; padding-bottom: 8px; }
+  .meta { margin: 20px 0; }
+  .meta div { margin-bottom: 4px; }
+  .signature-block { margin-top: 60px; display: flex; justify-content: space-between; }
+  .signature-line { border-top: 1px solid #333; width: 250px; padding-top: 4px; }
+</style>
+</head>
+<body>
+  <h1>Buyer Representation Agreement</h1>
+
+  <div class="meta">
+    <div><strong>Buyer:</strong> {{ contact.full_name }}</div>
+    <div><strong>Buyer Email:</strong> {{ contact.email }}</div>
+    <div><strong>Buyer Phone:</strong> {{ contact.phone }}</div>
+    <div><strong>Representing Agent:</strong> {{ agent.full_name }}</div>
+    <div><strong>Date:</strong> {{ generated_date }}</div>
+  </div>
+
+  <p>
+    The Buyer engages the Agent as their exclusive representative in the search for and purchase of
+    residential real estate, under the terms to be negotiated between the parties.
+  </p>
+
+  <div class="signature-block">
+    <div class="signature-line">Buyer Signature</div>
+    <div class="signature-line">Agent Signature</div>
+  </div>
+</body>
+</html>
