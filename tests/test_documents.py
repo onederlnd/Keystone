@@ -5,8 +5,8 @@ from unittest.mock import patch
 import pytest
 import pytest_asyncio
 
-from app.models.user import UserRole
-from app.models.document import Documents
+from backend.app.models.user import UserRole
+from backend.app.models.document import Documents
 
 
 @pytest_asyncio.fixture
@@ -53,7 +53,7 @@ async def create_document_in_db(
 
 
 def _headers_for(user):
-    from app.core.security import create_access_token
+    from backend.app.core.security import create_access_token
 
     token = create_access_token({"sub": str(user.id)})
     return {"Authorization": f"Bearer {token}"}
@@ -265,7 +265,7 @@ async def test_update_document_status_non_owner_forbidden(
     document, owner = await create_document_in_db(status="draft")
     other = await create_user_in_db(email="statusother@test.com", role=UserRole.agent)
 
-    with patch("app.routers.documents.update_status") as mock_update_status:
+    with patch("backend.app.routers.documents.update_status") as mock_update_status:
         mock_update_status.return_value = document
         response = await client.post(
             f"/documents/{document.id}/status",
@@ -280,7 +280,7 @@ async def test_update_document_status_non_owner_forbidden(
 async def test_update_document_status_not_found(client, create_user_in_db):
     user = await create_user_in_db(email="statusnf@test.com", role=UserRole.agent)
 
-    with patch("app.routers.documents.update_status") as mock_update_status:
+    with patch("backend.app.routers.documents.update_status") as mock_update_status:
         mock_update_status.return_value = None
         response = await client.post(
             f"/documents/{uuid.uuid4()}/status",
@@ -308,9 +308,17 @@ async def test_generate_document(
     pipeline = await create_pipeline_in_db()
 
     with (
-        patch("app.services.document.render_template", return_value="<html></html>"),
-        patch("app.services.document.generate_pdf", return_value=b"%PDF-1.4 fake"),
-        patch("app.services.document.save_pdf_to_disk", return_value="/tmp/fake.pdf"),
+        patch(
+            "backend.app.services.document.render_template",
+            return_value="<html></html>",
+        ),
+        patch(
+            "backend.app.services.document.generate_pdf", return_value=b"%PDF-1.4 fake"
+        ),
+        patch(
+            "backend.app.services.document.save_pdf_to_disk",
+            return_value="/tmp/fake.pdf",
+        ),
     ):
         response = await client.post(
             "/documents",

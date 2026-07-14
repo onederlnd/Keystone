@@ -1,7 +1,11 @@
 # tests/test_state_machine.py
 
 import pytest
-from app.core.state_machine import LISTING_MACHINE, PIPELINE_MACHINE, DOCUMENT_MACHINE
+from backend.app.core.state_machine import (
+    LISTING_MACHINE,
+    PIPELINE_MACHINE,
+    DOCUMENT_MACHINE,
+)
 
 
 # --- Valid transitions ---

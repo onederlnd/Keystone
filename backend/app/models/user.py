@@ -1,0 +1,27 @@
+import uuid
+import enum
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Enum as SAEnum, UUID
+from backend.app.models.mixins import TimestampMixin
+from backend.app.core.database import Base
+
+
+class UserRole(str, enum.Enum):
+    admin = "admin"
+    agent = "agent"
+    buyer = "buyer"
+    seller = "seller"
+
+
+class Users(TimestampMixin, Base):
+    __tablename__ = "users"
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    email: Mapped[str] = mapped_column(unique=True, index=True, nullable=False)
+    hashed_password: Mapped[str] = mapped_column(nullable=False)
+    full_name: Mapped[str | None] = mapped_column(nullable=True)
+    role: Mapped[UserRole] = mapped_column(
+        SAEnum(UserRole), nullable=False, default=UserRole.buyer
+    )
+    is_active: Mapped[bool] = mapped_column(default=True, nullable=False)

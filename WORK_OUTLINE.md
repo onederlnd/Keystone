@@ -326,39 +326,39 @@ These apply across every phase. Every decision about status modeling, service de
 
 ### 5.1 Service Logic
 
-- [ ] `app/services/analytics_service.py`
-  - [ ] `get_comps(db, zip, city, min_price, max_price)`
-  - [ ] `get_price_per_sqft(db, zip=None, city=None)` — guards `sqft == 0`
-  - [ ] `get_days_on_market(db, zip=None, city=None)` — `sold` listings only, uses status history timestamps
-  - [ ] `get_agent_summary(db, agent_id)` — counts + avg price
-  - [ ] `get_listing_report(db, listing_id)` — price, comps, DOM combined
-  - [ ] `flag_stale_listings(db, days_threshold)` — returns listings in `active` with no status change beyond threshold; fires `listing.stale` hook per result
-  - [ ] `flag_price_outliers(db, zip, threshold_pct)` — listings priced X% above/below area avg; fires `listing.price_alert` hook per result
+- [x] `app/services/analytics_service.py`
+  - [x] `get_comps(db, zip, city, min_price, max_price)`
+  - [x] `get_price_per_sqft(db, zip=None, city=None)` — guards `sqft == 0`
+  - [x] `get_days_on_market(db, zip=None, city=None)` — `sold` listings only, uses status history timestamps
+  - [x] `get_agent_summary(db, agent_id)` — counts + avg price
+  - [x] `get_listing_report(db, listing_id)` — price, comps, DOM combined
+  - [x] `flag_stale_listings(db, days_threshold)` — returns listings in `active` with no status change beyond threshold; fires `listing.stale` hook per result
+  - [x] `flag_price_outliers(db, zip, threshold_pct)` — listings priced X% above/below area avg; fires `listing.price_alert` hook per result
 
 ### 5.2 Routes
 
-- [ ] `GET /analytics/comps`, `/price-per-sqft`, `/days-on-market`, `/agent/{id}/summary`, `/listings/{id}/report`
+- [x] `GET /analytics/comps`, `/price-per-sqft`, `/days-on-market`, `/agent/{id}/summary`, `/listings/{id}/report`
 
 ### 5.3 Automation Hooks
 
-- [ ] Register `listing.stale` hook → write to `approval_queue`: "Consider reducing price or archiving"
-- [ ] Register `listing.price_alert` hook → write to `approval_queue`: "Listing price may need review"
-- [ ] Celery periodic task: `run_stale_listing_check` — runs `flag_stale_listings` on a schedule
+- [x] Register `listing.stale` hook → write to `approval_queue`: "Consider reducing price or archiving"
+- [x] Register `listing.price_alert` hook → write to `approval_queue`: "Listing price may need review"
+- [x] Celery periodic task: `run_stale_listing_check` — runs `flag_stale_listings` on a schedule
 
 ### 5.4 Tests
 
-- [ ] `tests/test_analytics.py` — comps, price/sqft, DOM, agent summary, edge cases
-- [ ] `tests/test_analytics_hooks.py`
-  - [ ] `flag_stale_listings` fires `listing.stale` hook for qualifying listings only
-  - [ ] `flag_price_outliers` fires `listing.price_alert` for outliers only
-  - [ ] Approval queue entries created for each flagged listing
+- [x] `tests/test_analytics.py` — comps, price/sqft, DOM, agent summary, edge cases
+- [x] `tests/test_analytics_hooks.py`
+  - [x] `flag_stale_listings` fires `listing.stale` hook for qualifying listings only
+  - [x] `flag_price_outliers` fires `listing.price_alert` for outliers only
+  - [x] Approval queue entries created for each flagged listing
 
 ### Phase 5 Completion Criteria
 
-- [ ] All analytics queries correct on seeded data
-- [ ] Stale and price alert detection produces correct queue entries
-- [ ] Celery beat task registered and runnable
-- [ ] `pytest tests/test_analytics.py tests/test_analytics_hooks.py -v` — all green
+- [x] All analytics queries correct on seeded data
+- [x] Stale and price alert detection produces correct queue entries
+- [x] Celery beat task registered and runnable
+- [x] `pytest tests/test_analytics.py tests/test_analytics_hooks.py -v` — all green
 
 ---
 

@@ -1,7 +1,7 @@
 # tests/test_listings.py
 
 import pytest
-from app.models.user import UserRole
+from backend.app.models.user import UserRole
 
 
 @pytest.mark.asyncio
@@ -129,7 +129,7 @@ async def test_change_status_invalid_transition(
 async def test_change_status_requires_approval(
     client, create_listing_in_db, create_user_in_db, db_session
 ):
-    from app.models.approval_queue import ApprovalQueue
+    from backend.app.models.approval_queue import ApprovalQueue
     from sqlalchemy import select
 
     listing = await create_listing_in_db()

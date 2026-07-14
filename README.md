@@ -18,13 +18,27 @@ The long-term goal is near-full automation: Keystone drives the transaction, age
 | 2 | Listings + Status History + Transition Hooks | ✅ Complete |
 | 3 | Contacts & CRM Pipeline + Stage Automation Hooks | ✅ Complete |
 | 4 | Document Generation + Auto-Generate on Pipeline Stage | ✅ Complete |
-| 5 | Market Analysis + Analytics-Driven Automation Triggers | ⬜ Not Started |
+| 5 | Market Analysis + Analytics-Driven Automation Triggers | ✅ Complete |
 | 6 | Notifications as Automation Byproduct | ⬜ Not Started |
 | 7 | Automation Engine + Approval Queue + Override Logs | ⬜ Not Started |
 
 See `WORK_OUTLINE.md` for the detailed, file-level build checklist behind each phase.
 
 ---
+
+## Demo Accounts
+
+Demo accounts (all use password: password123):
+
+| Username | Email |
+| --- | --- |
+| admin | <admin@keystone.demo> |
+| agent | <agent1@keystone.demo> |
+| agent | <agent2@keystone.demo> |
+| seller | <seller1@keystone.demo> |
+| seller | <seller2@keystone.demo> |
+| buyer | <buyer1@keystone.demo> |
+| buyer | <buyer2@keystone.demo> |
 
 ## What Keystone Does Today
 
@@ -171,8 +185,8 @@ pytest tests/ -v
 pytest tests/test_auth.py tests/test_users.py -v                          # Phase 1
 pytest tests/test_listings.py tests/test_listing_hooks.py -v              # Phase 2
 pytest tests/test_contacts.py tests/test_pipeline.py tests/test_pipeline_hooks.py -v  # Phase 3
-pytest tests/test_documents.py -v                                         # Phase 4 (pending)
-pytest tests/test_analytics.py -v                                         # Phase 5 (pending)
+pytest tests/test_documents.py -v                                         # Phase 4
+pytest tests/test_analytics.py -v                                         # Phase 5
 pytest tests/test_notifications.py -v                                     # Phase 6 (pending)
 pytest tests/test_automation.py -v                                        # Phase 7 (pending)
 ```

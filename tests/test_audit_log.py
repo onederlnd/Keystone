@@ -1,7 +1,7 @@
 # tests/test_audit_log.py
 
 import pytest
-from app.models.audit_log import AuditLog
+from backend.app.models.audit_log import AuditLog
 
 
 @pytest.mark.asyncio
