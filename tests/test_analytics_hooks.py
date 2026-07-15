@@ -4,10 +4,10 @@ import pytest
 import pytest_asyncio
 from sqlalchemy import select
 
-from backend.app.core.config import settings
-from backend.app.automation.hooks import fire_hook
-from backend.app.models.approval_queue import ApprovalQueue
-from backend.app.models.listing_status_history import ListingStatusHistory
+from app.core.config import settings
+from app.automation.hooks import fire_hook
+from app.models.approval_queue import ApprovalQueue
+from app.models.listing_status_history import ListingStatusHistory
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -20,7 +20,7 @@ async def register_hooks_for_test(reset_hook_registry, patch_async_session_local
     import sys
     import importlib
 
-    for name in ("backend.app.automation.analytics_hooks",):
+    for name in ("app.automation.analytics_hooks",):
         if name in sys.modules:
             importlib.reload(sys.modules[name])
         else:

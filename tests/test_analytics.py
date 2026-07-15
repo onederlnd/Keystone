@@ -5,9 +5,9 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from backend.app.models.user import UserRole
-from backend.app.models.listing_status_history import ListingStatusHistory
-from backend.app.services.analytics import (
+from app.models.user import UserRole
+from app.models.listing_status_history import ListingStatusHistory
+from app.services.analytics import (
     get_comps,
     get_price_per_sqft,
     get_days_on_market,
@@ -19,7 +19,7 @@ from backend.app.services.analytics import (
 
 
 def _headers_for(user):
-    from backend.app.core.security import create_access_token
+    from app.core.security import create_access_token
 
     token = create_access_token({"sub": str(user.id)})
     return {"Authorization": f"Bearer {token}"}
@@ -177,7 +177,7 @@ async def test_flag_stale_listings_flags_only_qualifying(
     from unittest.mock import AsyncMock
 
     mock_fire_hook = AsyncMock()
-    monkeypatch.setattr("backend.app.services.analytics.fire_hook", mock_fire_hook)
+    monkeypatch.setattr("app.services.analytics.fire_hook", mock_fire_hook)
 
     agent = await create_user_in_db(
         email=f"stale-{uuid.uuid4()}@test.com", role=UserRole.agent
@@ -208,7 +208,7 @@ async def test_flag_price_outliers_flags_only_outliers(
     from unittest.mock import AsyncMock
 
     mock_fire_hook = AsyncMock()
-    monkeypatch.setattr("backend.app.services.analytics.fire_hook", mock_fire_hook)
+    monkeypatch.setattr("app.services.analytics.fire_hook", mock_fire_hook)
 
     zip_code = f"{uuid.uuid4().int % 100000:05d}"
     normal_a = await create_listing_in_db(zip=zip_code, price=200000)

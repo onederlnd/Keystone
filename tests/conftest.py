@@ -5,16 +5,16 @@ import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.pool import StaticPool
-from backend.app.main import app
-from backend.app.core.database import Base, get_db
-from backend.app.core.security import hash_password, create_access_token
-from backend.app.models.user import Users, UserRole
-from backend.app.models.pipeline import Pipelines
-from backend.app.models.contact import Contacts
-from backend.app.models.listing import Listings
-from backend.app.tasks.celery_app import celery_app
+from app.main import app
+from app.core.database import Base, get_db
+from app.core.security import hash_password, create_access_token
+from app.models.user import Users, UserRole
+from app.models.pipeline import Pipelines
+from app.models.contact import Contacts
+from app.models.listing import Listings
+from app.tasks.celery_app import celery_app
 
-from backend.app.models.document import Documents
+from app.models.document import Documents
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
@@ -242,7 +242,7 @@ async def task_eager_mode():
 
 @pytest_asyncio.fixture(autouse=True)
 def reset_hook_registry():
-    from backend.app.automation.registry import REGISTRY
+    from app.automation.registry import REGISTRY
 
     REGISTRY.clear()
     yield
@@ -257,5 +257,5 @@ async def patch_async_session_local(monkeypatch):
     session. Point that sessionmaker at the test engine, or hook writes land
     in an unrelated database.
     """
-    monkeypatch.setattr("backend.app.core.database.AsyncSessionLocal", TestSessionLocal)
+    monkeypatch.setattr("app.core.database.AsyncSessionLocal", TestSessionLocal)
     yield

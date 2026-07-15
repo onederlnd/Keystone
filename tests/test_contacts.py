@@ -4,9 +4,9 @@ import uuid
 import pytest
 from sqlalchemy import select
 
-from backend.app.models.user import UserRole
-from backend.app.models.contact import Contacts
-from backend.app.core.security import create_access_token
+from app.models.user import UserRole
+from app.models.contact import Contacts
+from app.core.security import create_access_token
 
 
 def _headers_for(user):

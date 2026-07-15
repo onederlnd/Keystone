@@ -31,8 +31,8 @@ async def test_get_user_not_found(client, auth_headers):
 
 @pytest.mark.asyncio
 async def test_patch_user_self(client, auth_headers, create_user_in_db):
-    from backend.app.models.user import UserRole
-    from backend.app.core.security import create_access_token
+    from app.models.user import UserRole
+    from app.core.security import create_access_token
 
     user = await create_user_in_db(email="edit@test.com", role=UserRole.buyer)
     token = create_access_token({"sub": str(user.id)})
@@ -46,7 +46,7 @@ async def test_patch_user_self(client, auth_headers, create_user_in_db):
 
 @pytest.mark.asyncio
 async def test_delete_user_admin_only(client, auth_headers, create_user_in_db):
-    from backend.app.models.user import UserRole
+    from app.models.user import UserRole
 
     target = await create_user_in_db(email="target2@test.com")
 

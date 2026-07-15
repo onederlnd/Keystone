@@ -1,7 +1,7 @@
 # tests/test_state_machine.py
 
 import pytest
-from backend.app.core.state_machine import (
+from app.core.state_machine import (
     LISTING_MACHINE,
     PIPELINE_MACHINE,
     DOCUMENT_MACHINE,

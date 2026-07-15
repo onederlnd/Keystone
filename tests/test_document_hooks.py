@@ -6,11 +6,11 @@ import pytest
 import pytest_asyncio
 from sqlalchemy import select
 
-from backend.app.core.config import settings
-from backend.app.automation.hooks import fire_hook
-from backend.app.models.document import Documents
-from backend.app.models.approval_queue import ApprovalQueue
-from backend.app.services.document import update_status
+from app.core.config import settings
+from app.automation.hooks import fire_hook
+from app.models.document import Documents
+from app.models.approval_queue import ApprovalQueue
+from app.services.document import update_status
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -25,13 +25,13 @@ async def register_hooks_for_test(reset_hook_registry, patch_async_session_local
     """
     import sys
     import importlib
-    from backend.app.automation.registry import REGISTRY
+    from app.automation.registry import REGISTRY
 
     REGISTRY.clear()
 
     for name in (
-        "backend.app.automation.document_hooks",
-        "backend.app.automation.pipeline_hooks",
+        "app.automation.document_hooks",
+        "app.automation.pipeline_hooks",
     ):
         if name in sys.modules:
             importlib.reload(sys.modules[name])
@@ -43,14 +43,12 @@ async def register_hooks_for_test(reset_hook_registry, patch_async_session_local
 def _mock_pdf_pipeline():
     return (
         patch(
-            "backend.app.services.document.render_template",
+            "app.services.document.render_template",
             return_value="<html></html>",
         ),
+        patch("app.services.document.generate_pdf", return_value=b"%PDF-1.4 fake"),
         patch(
-            "backend.app.services.document.generate_pdf", return_value=b"%PDF-1.4 fake"
-        ),
-        patch(
-            "backend.app.services.document.save_pdf_to_disk",
+            "app.services.document.save_pdf_to_disk",
             return_value="/tmp/fake-hook-doc.pdf",
         ),
     )

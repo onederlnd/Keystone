@@ -5,9 +5,9 @@ from unittest.mock import AsyncMock
 import pytest
 from sqlalchemy import select
 
-from backend.app.models.listing_status_history import ListingStatusHistory
-from backend.app.models.approval_queue import ApprovalQueue
-from backend.app.core.config import settings
+from app.models.listing_status_history import ListingStatusHistory
+from app.models.approval_queue import ApprovalQueue
+from app.core.config import settings
 
 
 @pytest.mark.asyncio
@@ -15,7 +15,7 @@ async def test_status_change_fires_hook_with_correct_event_and_context(
     client, create_listing_in_db, create_user_in_db, monkeypatch
 ):
     mock_fire_hook = AsyncMock()
-    monkeypatch.setattr("backend.app.services.listing.fire_hook", mock_fire_hook)
+    monkeypatch.setattr("app.services.listing.fire_hook", mock_fire_hook)
 
     listing = await create_listing_in_db()
     agent = await create_user_in_db(email="hookagent@test.com")
@@ -45,7 +45,7 @@ async def test_automation_disabled_hook_is_noop(
     monkeypatch.setattr(settings, "automation_enabled", False)
 
     side_effect_spy = AsyncMock()
-    from backend.app.automation.hooks import register_hook
+    from app.automation.hooks import register_hook
 
     register_hook("listing.active", side_effect_spy)
 

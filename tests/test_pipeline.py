@@ -4,9 +4,9 @@ import uuid
 import pytest
 from sqlalchemy import select
 
-from backend.app.models.user import UserRole
-from backend.app.models.pipeline import Pipelines
-from backend.app.models.approval_queue import ApprovalQueue
+from app.models.user import UserRole
+from app.models.pipeline import Pipelines
+from app.models.approval_queue import ApprovalQueue
 
 
 @pytest.mark.asyncio
