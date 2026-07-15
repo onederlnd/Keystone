@@ -1,12 +1,12 @@
 import uuid
 from sqlalchemy import select
 from backend.app.models.approval_queue import ApprovalQueue
+from backend.app.models.listing import Listings
 from backend.app.automation.hooks import register_hook
 from backend.app.core.database import AsyncSessionLocal
-from backend.app.models.listing import Listings
 
 
-async def on_listing_stale(context: dict):
+async def on_listing_stale(context):
     async with AsyncSessionLocal() as db:
         result = await db.execute(
             select(Listings).where(Listings.id == uuid.UUID(context["listing_id"]))

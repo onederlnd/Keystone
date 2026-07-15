@@ -1,6 +1,5 @@
 # tests/test_listing_hooks.py
 
-import uuid
 from unittest.mock import AsyncMock
 
 import pytest

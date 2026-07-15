@@ -12,7 +12,7 @@ from backend.app.models.user import Users, UserRole
 from backend.app.models.pipeline import Pipelines
 from backend.app.models.contact import Contacts
 from backend.app.models.listing import Listings
-
+from backend.app.tasks.celery_app import celery_app
 
 from backend.app.models.document import Documents
 
@@ -231,6 +231,13 @@ async def create_document_in_db(
         return document, created_by
 
     return _create
+
+
+@pytest_asyncio.fixture(autouse=True)
+async def task_eager_mode():
+    celery_app.conf.update(task_always_eager=True, task_eager_propagates=True)
+    yield
+    celery_app.conf.update(task_always_eager=False, task_eager_propagates=False)
 
 
 @pytest_asyncio.fixture(autouse=True)

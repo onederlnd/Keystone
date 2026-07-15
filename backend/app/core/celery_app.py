@@ -1,3 +1,5 @@
+# app/core/celery_app.py
+
 from celery import Celery
 from celery.schedules import crontab
 from backend.app.core.config import settings

@@ -11,8 +11,6 @@ from backend.app.services.analytics import (
     get_days_on_market,
     get_listing_report,
     get_price_per_sqft,
-    flag_price_outliers,
-    flag_stale_listings,
 )
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])

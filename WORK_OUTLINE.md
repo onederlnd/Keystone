@@ -368,10 +368,10 @@ These apply across every phase. Every decision about status modeling, service de
 
 ### 6.1 Infrastructure
 
-- [ ] `app/tasks/celery_app.py` — Celery configured with Redis broker + backend
+- [x] `app/tasks/celery_app.py` — Celery configured with Redis broker + backend
 - [ ] `app/core/notifications.py` — `send_email(to, subject, body)` SMTP wrapper + Jinja2 email templates
-- [ ] `app/tasks/email_tasks.py` — one Celery task per notification type, each reads entity from DB to build context
-- [ ] `app/tasks/sms_tasks.py` — stub tasks, same shape as email tasks
+- [x] `app/tasks/email_tasks.py` — one Celery task per notification type, each reads entity from DB to build context
+- [x] `app/tasks/sms_tasks.py` — stub tasks, same shape as email tasks
 
 ### 6.2 Hook Registration
 

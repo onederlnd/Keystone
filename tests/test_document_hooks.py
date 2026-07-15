@@ -1,6 +1,5 @@
 # tests/test_document_hooks.py
 
-import uuid
 from unittest.mock import patch
 
 import pytest

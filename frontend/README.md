@@ -15,7 +15,7 @@ Make sure your FastAPI backend has CORS configured to allow `http://localhost:51
 ## What's here
 
 | Screen | Route | Backend endpoints used |
-|---|---|---|
+| --- | --- | --- |
 | Login | `/login` | `POST /auth/login`, `GET /users/me` |
 | Dashboard | `/` | `GET /listings/`, `GET /analytics/agent/{id}/summary` |
 | Listings | `/listings`, `/listings/:id` | `GET/PATCH /listings/*` |

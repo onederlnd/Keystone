@@ -137,10 +137,10 @@ cp .env.example .env
 alembic upgrade head
 
 # 5. Start the server
-uvicorn app.main:app --reload
+uvicorn backend.app.main:app --reload
 
 # 6. Start Celery worker (separate terminal)
-celery -A app.tasks.celery_app worker --loglevel=info
+celery -A backend.app.tasks.celery_app worker --loglevel=info
 ```
 
 ---
