@@ -1,8 +1,22 @@
 # app/core/celery_app.py
 
+import asyncio
+from functools import wraps
 from celery import Celery
 from celery.schedules import crontab
 from app.core.config import settings
+
+
+def async_task(*args, **kwargs):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*a, **kw):
+            return asyncio.run(func(*a, **kw))
+
+        return celery_app.task(*args, **kwargs)(wrapper)
+
+    return decorator
+
 
 celery_app = Celery(
     "realestate_crm",  # app name
@@ -11,16 +25,15 @@ celery_app = Celery(
 )
 
 celery_app.conf.beat_schedule = {
-    "check-stale-pipeline": {
+    "check_stale_pipeline": {
         "task": "tasks.check_stale_pipeline",
-        "schedule": crontab(hour=6, minute=0),
-    }
-}
-celery_app.config.beat_schedule = {
+        "schedule": crontab(hour=4, minute=0),  # 04:00
+    },
     "check_stale_listing": {
         "task": "tasks.check_stale_listing",
-        "schedule": crontab(hour=6, minutes=30),
-    }
+        "schedule": crontab(hour=4, minute=30),  # 04:30
+    },
 }
+
 celery_app.conf.timezone = "UTC"
 celery_app.autodiscover_tasks(["app.tasks"])

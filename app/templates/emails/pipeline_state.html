@@ -1,0 +1,10 @@
+<html>
+  <body>
+    <p>Hello,</p>
+    <p>A deal has moved to a new pipeline stage.</p>
+    <p>Stage: <strong>{{ stage }}</strong></p>
+    {% if offer_price %}
+    <p>Offer Price: ${{ "{:,}".format(offer_price) }}</p>
+    {% endif %}
+  </body>
+</html>

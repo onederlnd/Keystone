@@ -3,9 +3,12 @@
 import uuid
 from datetime import datetime
 from sqlalchemy import ForeignKey, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 from app.models.mixins import TimestampMixin
+from app.models.listing import Listings
+from app.models.contact import Contacts
+from app.models.user import Users
 
 
 class Pipelines(TimestampMixin, Base):
@@ -28,3 +31,7 @@ class Pipelines(TimestampMixin, Base):
     next_action_date: Mapped[datetime | None] = mapped_column(nullable=True)
     notes: Mapped[str | None] = mapped_column(nullable=True)
     last_stage_change_at: Mapped[datetime | None] = mapped_column(nullable=True)
+
+    listing: Mapped["Listings"] = relationship("Listings", foreign_keys=[listing_id])
+    contact: Mapped["Contacts"] = relationship("Contacts")
+    agent: Mapped["Users"] = relationship("Users")

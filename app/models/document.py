@@ -2,9 +2,13 @@
 
 import uuid
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 from app.models.mixins import TimestampMixin
+from app.models.listing import Listings
+from app.models.contact import Contacts
+from app.models.pipeline import Pipelines
+from app.models.user import Users
 
 
 class Documents(TimestampMixin, Base):
@@ -29,3 +33,8 @@ class Documents(TimestampMixin, Base):
     status: Mapped[str] = mapped_column(default="draft", nullable=False)
     file_path: Mapped[str] = mapped_column(nullable=False)
     generated_by: Mapped[str] = mapped_column(default="manual", nullable=False)
+
+    listing: Mapped["Listings"] = relationship("Listings")
+    contact: Mapped["Contacts"] = relationship("Contacts")
+    pipeline: Mapped["Pipelines"] = relationship("Pipelines")
+    created_by: Mapped["Users"] = relationship("Users")

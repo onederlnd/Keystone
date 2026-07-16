@@ -1,3 +1,5 @@
+# app/core/dependencies.py
+
 import uuid
 from fastapi import Depends, HTTPException
 from fastapi.security import OAuth2PasswordBearer

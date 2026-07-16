@@ -2,9 +2,10 @@
 
 import uuid
 from sqlalchemy import ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
 from app.models.mixins import TimestampMixin
+from app.models.user import Users
 
 
 class Contacts(TimestampMixin, Base):
@@ -19,3 +20,6 @@ class Contacts(TimestampMixin, Base):
     is_archived: Mapped[bool] = mapped_column(default=False)
     source: Mapped[str] = mapped_column(nullable=False)
     notes: Mapped[str] = mapped_column(nullable=True)
+
+    agent: Mapped["Users"] = relationship("Users", foreign_keys=[agent_id])
+    user: Mapped["Users"] = relationship("Users", foreign_keys=[user_id])

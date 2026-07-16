@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.database import Base
+from app.models.user import Users
 from app.models.mixins import TimestampMixin
 from app.models.listing_status_history import ListingStatusHistory
 
@@ -35,3 +36,6 @@ class Listings(TimestampMixin, Base):
     sqft: Mapped[int] = mapped_column(nullable=False)
     description: Mapped[str] = mapped_column(nullable=True)
     mls_id: Mapped[str] = mapped_column(nullable=False)
+
+    agent: Mapped["Users"] = relationship("Users", foreign_keys=[agent_id])
+    seller: Mapped["Users"] = relationship("Users", foreign_keys=[seller_id])

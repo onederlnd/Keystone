@@ -59,7 +59,6 @@ These apply across every phase. Every decision about status modeling, service de
   - [x] `requires_approval` flag set per transition (e.g. `active → under_contract` = True)
 - [x] `app/automation/` package stub
   - [x] `__init__.py`
-
   - [x] `hooks.py` — `register_hook(event: str, fn)` and `fire_hook(event: str, context: dict)` — when `AUTOMATION_ENABLED=False`, `fire_hook` is a no-op
   - [x] `registry.py` — empty dict, hooks registered here in later phases
 - [x] `app/models/audit_log.py`
@@ -74,7 +73,7 @@ These apply across every phase. Every decision about status modeling, service de
   - [x] `notes` Text, nullable
   - [x] `created_at` timestamp
 - [x] `app/models/approval_queue.py`
-  - [x] `id` UUI PK
+  - [x] `id` UUID PK
   - [x] `entity_type` str
   - [x] `entity_id` UUID
   - [x] `proposed_action` str
@@ -98,14 +97,14 @@ These apply across every phase. Every decision about status modeling, service de
 
 ### 1.2 User Model & Schema
 
-- [X] `app/models/user.py`
-  - [X] `id` UUID PK, default `uuid4`
-  - [X] `email` unique, indexed, not null
-  - [X] `hashed_password` not null
-  - [X] `full_name`
-  - [X] `role` Enum (`admin`, `agent`, `buyer`, `seller`), default `buyer`
-  - [X] `is_active` bool, default `True`
-  - [X] `created_at`, `updated_at` via `TimestampMixin`
+- [x] `app/models/user.py`
+  - [x] `id` UUID PK, default `uuid4`
+  - [x] `email` unique, indexed, not null
+  - [x] `hashed_password` not null
+  - [x] `full_name`
+  - [x] `role` Enum (`admin`, `agent`, `buyer`, `seller`), default `buyer`
+  - [x] `is_active` bool, default `True`
+  - [x] `created_at`, `updated_at` via `TimestampMixin`
 - [x] `app/schemas/user.py`
   - [x] `UserCreate`, `UserLogin`, `UserRead`, `UserUpdate`, `Token`
 - [x] `app/models/mixins.py` — `TimestampMixin` with `created_at`, `updated_at`
@@ -197,7 +196,7 @@ These apply across every phase. Every decision about status modeling, service de
 - [x] Every status change goes through `LISTING_MACHINE` — invalid transitions rejected with 422
 - [x] Approval-required transitions land in queue regardless of `triggered_by`, not applied directly
 - [x] Hooks called on every valid transition
-- [x] `pytest tests/test_listings.py tests/test_listing_hooks.py -v` — all green (re-run after the `change_status` fix + new manual-approval test)
+- [x] `pytest tests/test_listings.py tests/test_listing_hooks.py -v` — all green
 
 ---
 
@@ -273,7 +272,7 @@ These apply across every phase. Every decision about status modeling, service de
 - [x] Alembic migration
 - [x] `app/templates/offer_letter.html`, `listing_agreement.html`, `buyer_rep_agreement.html`, `closing_summary.html`
 
-### .2 Schemas
+### 4.2 Schemas
 
 - [x] `DocumentGenerateRequest`, `DocumentRead`, `DocumentStatusUpdate`
 
@@ -291,14 +290,10 @@ These apply across every phase. Every decision about status modeling, service de
 
 ### 4.4 Automation Hooks
 
-- [x] _generate_and_queue_document - shared implementation for automation hooks
-
+- [x] `_generate_and_queue_document` — shared implementation for automation hooks
 - [x] Register hook on `pipeline.offer_submitted` → auto-generate `offer_letter`, write to `approval_queue` for agent review before sending
-
 - [x] Register hook on `listing.active` → auto-generate `listing_agreement`, queue for review
-
 - [x] Register hook on `pipeline.closed` → auto-generate closing summary, queue for review
-
 - [x] `document.sent` hook → placeholder for notification task
 
 ### 4.5 Tests
@@ -368,21 +363,33 @@ These apply across every phase. Every decision about status modeling, service de
 
 ### 6.1 Infrastructure
 
-- [x] `app/tasks/celery_app.py` — Celery configured with Redis broker + backend
-- [ ] `app/core/notifications.py` — `send_email(to, subject, body)` SMTP wrapper + Jinja2 email templates
+- [x] `app/core/celery_app.py` — Celery configured with Redis broker + backend, autodiscover for `email_tasks`/`sms_tasks`, `async_task` decorator for sync/async bridging
+- [x] `app/core/notifications.py` — send_email/Jinja2/_render_template implemented, contract confirmed against email_tasks.py (all four contexts now include `template` key)
+  - [x] `app/templates/emails/listing_status.html`
+  - [x] `app/templates/emails/document_ready.html`
+  - [x] `app/templates/emails/pipeline_stage.html`
+  - [x] `app/templates/emails/new_contact.html`
 - [x] `app/tasks/email_tasks.py` — one Celery task per notification type, each reads entity from DB to build context
-- [] `app/tasks/sms_tasks.py` — stub tasks, same shape as email tasks
+  - [x] `send_listing_status_email(listing_id, recipient_role)` — resolves recipient from `agent`/`seller`
+  - [x] `send_document_ready_email(document_id)` — sends to `document.contact`
+  - [x] `send_pipeline_stage_email(pipeline_id, recipient_role)` — resolves recipient from `agent`/`contact`
+  - [x] `send_new_contact_email(contact_id)` — sends to `contact.agent`
+  - [x] Verify actual relationship names (`listing.agent`, `pipeline.contact`, `document.contact`, `contact.agent`) against real models — written on assumption, not yet confirmed against model definitions
+- [x] `app/tasks/sms_tasks.py` — stub tasks, same shape as email tasks (no send logic yet)
 
 ### 6.2 Hook Registration
 
-- [ ] `listing.active` → `send_listing_live_email` (agent + seller)
-- [ ] `listing.under_contract` → `send_under_contract_email` (agent + buyer + seller)
-- [ ] `listing.sold` → `send_sold_email` (all parties)
-- [ ] `listing.stale` → `send_stale_listing_alert_email` (agent only)
-- [ ] `pipeline.offer_submitted` → `send_offer_received_email` (agent + seller)
-- [ ] `pipeline.closed` → `send_deal_closed_email` (all parties)
-- [ ] `document.sent` → `send_document_delivery_email` (contact)
-- [ ] `contact.created` → `send_new_contact_email` (agent)
+Design decision: **one task call per recipient**, not one task looping internally — matches thin-hook architecture and isolates per-recipient send failures. Hooks loop through relevant roles and `.delay()` the task once per role.
+
+- [] `app/automation/notification_hooks.py` scaffolded — all 8 hook functions registered against `register_hook`, function bodies still `pass`
+- [ ] `on_listing_active` → loop `["agent", "seller"]`, call `send_listing_status_email.delay(listing_id, role)`
+- [ ] `on_listing_under_contract` → loop `["agent", "buyer", "seller"]`
+- [ ] `on_listing_sold` → loop `["agent", "buyer", "seller"]`
+- [ ] `on_listing_stale` → single call, `recipient_role="agent"`
+- [ ] `on_pipeline_offer_submitted` → loop `["agent", "seller"]`
+- [ ] `on_pipeline_closed` → loop `["agent", "buyer", "seller"]`
+- [ ] `on_document_sent` → single call to `send_document_ready_email(document_id)` (no `recipient_role` param — always contact)
+- [ ] `on_contact_created` → single call to `send_new_contact_email(contact_id)`
 
 ### 6.3 Idempotency & Reliability
 
@@ -405,6 +412,42 @@ These apply across every phase. Every decision about status modeling, service de
 - [ ] Zero manual `send_email` calls in service layer — all via hooks
 - [ ] Tasks idempotent and retriable
 - [ ] `pytest tests/test_notifications.py -v` — all green
+
+---
+
+## Phase 6.5 — Pre-Engine Security & Hardening Pass
+
+**Goal:** Close out gaps before `AUTOMATION_ENABLED` can be flipped on for real. Phase 7 lets the system take unattended action on live deals — anything shaky in auth, input handling, or notification delivery becomes higher-stakes once the engine is live, even with the approval queue in place. This phase is deliberately inserted before Phase 7 rather than after.
+
+### 6.5.1 Auth Hardening
+
+- [x] Confirmed `.env` is gitignored, not committed — only `.env.example` tracked
+- [ ] Rate limiting on `POST /auth/login` and `POST /auth/register` (e.g. `slowapi`, ~5/minute per IP)
+- [ ] Generic error message on failed login — `"Invalid email or password"` instead of `"User not found"`, to avoid leaking whether an email is registered (user enumeration)
+- [ ] Review JWT expiry (`ACCESS_TOKEN_EXPIRE_MINUTES=60`) and decide if a refresh-token flow is needed before the automation engine may be issuing/relying on longer-lived sessions
+
+### 6.5.2 Input & Rendering Safety
+
+- [x] `app/core/notifications.py` — Jinja2 `Environment` has `autoescape=True` (was missing; user-supplied strings like listing address or contact name could otherwise inject raw HTML into outgoing emails)
+- [ ] Review free-text fields (`Listings.address`, `Contacts.full_name`, `notes` fields, etc.) for `max_length` constraints in Pydantic schemas — unbounded text feeding into PDFs/emails is a secondary version of the same issue
+- [ ] Confirm no user-supplied string is interpolated into a SQL query outside the ORM (spot-check any raw SQL, if present)
+
+### 6.5.3 Secrets & Logging
+
+- [ ] Confirm SMTP/DB credentials never appear in application logs (check any debug `print`/`echo=True` settings before shipping)
+- [ ] Confirm prod deployment does not reuse dev `.env` values (`SECRET_KEY`, `SMTP_PASS`) verbatim
+
+### 6.5.4 Tests
+
+- [ ] `tests/test_auth.py` — add case: repeated failed logins get rate-limited (429)
+- [ ] `tests/test_auth.py` — add case: login failure message identical for bad email vs. bad password
+
+### Phase 6.5 Completion Criteria
+
+- [ ] Auth endpoints rate-limited and enumeration-resistant
+- [ ] All Jinja2 rendering paths confirmed autoescaped
+- [ ] No secrets in logs or committed files
+- [ ] Sign-off before flipping `AUTOMATION_ENABLED=true` in any shared environment
 
 ---
 

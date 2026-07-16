@@ -26,7 +26,10 @@ Comps, days-on-market, price-per-square-foot, and agent performance reporting, w
 ## What's Being Built Next
 
 **Notifications** *(in progress)*
-Automatic email and text alerts at key moments: a listing status change, a document ready for signature, a deal moving to the next stage.
+Automatic email and text alerts at key moments: a listing status change, a document ready for signature, a deal moving to the next stage. The email pipeline (Celery tasks, SMTP wrapper, Jinja2 templates) is built; wiring each automation hook to actually fire the right task for the right recipients is the remaining work.
+
+**Pre-Engine Hardening** *(current focus)*
+Before the automation engine goes live, this is a pass to close out notifications and shore up security — since Phase 7 is what starts taking real, unattended action on live deals. See "Current Status" below.
 
 **The Automation Engine** *(next up, this is the big one)*
 This is what the whole platform has been built toward: a rule-based system that watches deals in progress and takes routine action on its own, generating a document, sending a notification, advancing a stage, without an agent having to trigger it manually.
@@ -34,6 +37,20 @@ This is what the whole platform has been built toward: a rule-based system that 
 Anything with real stakes (money, legal documents, a status change a client will see) is never applied automatically. It's queued for an agent to approve, adjust, or reject first. A human clicking "approve" goes through the exact same review step as an automated action would; there's no shortcut that skips oversight.
 
 There's also a single on/off switch for the whole automation layer. With it off, the platform runs in fully manual mode, identical to how it works today, which is what makes it safe to build and test the automation piece without risk to how agents already use the system day-to-day.
+
+## Exploratory — Intelligence Layer
+
+Not yet scoped or scheduled. Captures direction while it's fresh: building a proper ML layer into Keystone (not an LLM — classical/lightweight models: regression, gradient boosted trees, anomaly detection), reusing the two patterns already proven in the platform rather than inventing new ones.
+
+The idea: every model's output becomes an event, same as `listing.stale` today (e.g. `pipeline.risk_elevated`, `listing.price_suggested`). Every suggestion routes through the existing approval queue, so AI-driven suggestions get the same human-in-the-loop guarantee as rule-based automation — no separate "AI path" that bypasses review. Retraining reuses `override_log` (Phase 7) as each model's training signal, since agent approve/dismiss decisions are ground-truth labels no off-the-shelf competitor platform has access to.
+
+Candidate models, split by data readiness:
+
+- **Buildable now** (Phase 1–5 data): comps-based pricing regression, days-on-market prediction, price anomaly detection
+- **Needs Phase 7 first** (`override_log` as training data): deal fall-through risk, lead/deal scoring, optimal-listing-price-vs-agent-guess
+- **Lower priority / batch**: lead source ROI scoring, comp similarity scoring, emerging neighborhood detection
+
+Revisit once Phase 7 has shipped and produced enough real usage data to train against — building this before Phase 7 means training on incomplete data that gets thrown away almost immediately.
 
 ## The Short Version
 
@@ -50,7 +67,8 @@ What's coming next is the part that makes it more than just a nicer spreadsheet:
 | 3 | Contacts & CRM Pipeline + Stage Automation Hooks | ✅ Complete |
 | 4 | Document Generation + Auto-Generate on Pipeline Stage | ✅ Complete |
 | 5 | Market Analysis + Analytics-Driven Automation Triggers | ✅ Complete |
-| 6 | Notifications as Automation Byproduct | ⬜ Not Started |
+| 6 | Notifications as Automation Byproduct | 🔶 In Progress |
+| 6.5 | Pre-Engine Security & Hardening Pass | ⬜ Not Started |
 | 7 | Automation Engine + Approval Queue + Override Logs | ⬜ Not Started |
 
 See `WORK_OUTLINE.md` for the detailed, file-level build checklist behind each phase.
@@ -79,15 +97,13 @@ Demo accounts (all use password: password123):
 
 **CRM & Pipeline** — Contacts (buyers, sellers, leads) live in a built-in CRM tied to a deal pipeline, scoped so agents only see their own book of business (admins see everything). Pipeline stages — New, Contacted, Showing Scheduled, Offer Submitted, Negotiating, Under Contract, Closed, Lost — follow the same state-machine-and-approval pattern as listings. Stale deals (no stage movement in N days) can be surfaced on a schedule.
 
-## What's Coming Next (Phases 4–7)
+## What's Coming Next (Phases 6.5–7)
 
-**Document Generation** — Offers, disclosures, listing agreements, and buyer rep agreements generated automatically at the right pipeline stage, pre-filled from existing data, and queued for agent review before delivery.
+**Notifications (finishing Phase 6)** — Celery + Redis background tasks, SMTP wrapper, and Jinja2 email templates are built. Remaining: wire each of the 8 automation hooks (`listing.active`, `pipeline.closed`, etc.) to actually dispatch the right email task to the right recipients, plus idempotency/retry handling.
 
-**Market Analysis & Reporting** — Comps, days-on-market, price-per-sqft, and agent performance summaries. Analytics will also feed back into automation — stale listings and mispriced comps flagged automatically.
+**Security & Hardening (Phase 6.5)** — A deliberate pause before the automation engine goes live, since Phase 7 is what starts taking real, unattended action. Covers auth rate limiting, error message hardening, and a pass over Jinja2/user-input handling. See `WORK_OUTLINE.md` for the itemized checklist.
 
-**Automation Engine** — The core of Keystone's long-term vision. A rule-based engine will monitor transaction state and trigger actions — document generation, notifications, stage transitions — without agent input. Anything with real stakes routes through the approval queue for a human decision first.
-
-**Notifications** — Automated email (and SMS) at key moments: listing status changes, document delivery, pipeline advances. These will be a byproduct of the automation engine firing, not a separate feature to build and maintain.
+**Automation Engine (Phase 7)** — The core of Keystone's long-term vision. A rule-based engine will monitor transaction state and trigger actions — document generation, notifications, stage transitions — without agent input. Anything with real stakes routes through the approval queue for a human decision first.
 
 ---
 
@@ -113,6 +129,7 @@ This is the architectural backbone that every phase builds on, so it's worth und
 | Database | SQLite (dev) / PostgreSQL (prod) |
 | PDF Generation | WeasyPrint + Jinja2 |
 | Background Tasks | Celery + Redis |
+| Email | aiosmtplib + Jinja2 templates |
 | Auth | JWT via `python-jose` + `passlib` |
 | Testing | pytest + pytest-asyncio + httpx |
 | Config | Pydantic Settings (`.env`) |
@@ -122,7 +139,7 @@ This is the architectural backbone that every phase builds on, so it's worth und
 ## Project Structure
 
 ```bash
-backend/
+realestate/
 ├── alembic/                  # Migration files
 ├── app/
 │   ├── core/
@@ -130,24 +147,31 @@ backend/
 │   │   ├── database.py       # Async engine + session
 │   │   ├── security.py       # JWT, password hashing
 │   │   ├── dependencies.py   # Shared FastAPI deps (auth, roles, approval queue)
-│   │   └── state_machine.py  # Transition definitions for listings, pipeline, documents
-│   ├── models/               # SQLAlchemy ORM models
-│   ├── schemas/              # Pydantic v2 schemas
-│   ├── routers/              # FastAPI route handlers (thin — parse, call service, return)
-│   ├── services/             # Business logic layer
-│   ├── tasks/                # Celery background tasks
-│   ├── automation/           # Rule engine, approval queue, trigger registry
-│   └── main.py               # App factory + router registration
+│   │   ├── state_machine.py  # Transition definitions for listings, pipeline, documents
+│   │   └── notifications.py  # send_email SMTP wrapper + Jinja2 email templates
+│   ├── models/                # SQLAlchemy ORM models
+│   ├── schemas/                # Pydantic v2 schemas
+│   ├── routers/                # FastAPI route handlers (thin — parse, call service, return)
+│   ├── services/                # Business logic layer
+│   ├── tasks/                    # Celery background tasks (celery_app, email_tasks, sms_tasks)
+│   ├── automation/                # Rule engine, approval queue, trigger registry, notification hooks
+│   ├── templates/emails/           # Jinja2 email templates
+│   └── main.py                       # App factory + router registration
+├── scripts/
+│   └── seed.py                # Dev database seeding
 ├── tests/
 │   ├── conftest.py
 │   └── test_*.py
 ├── .env
 ├── .env.example
 ├── alembic.ini
+├── pytest.ini
 ├── requirements.txt
 ├── WORK_OUTLINE.md
 └── README.md
 ```
+
+> Note: `app/` was moved to the project root (previously nested under `backend/`) to simplify imports — everything is now `app.x`, not `backend.app.x`.
 
 ---
 
@@ -168,10 +192,10 @@ cp .env.example .env
 alembic upgrade head
 
 # 5. Start the server
-uvicorn backend.app.main:app --reload
+uvicorn app.main:app --reload
 
 # 6. Start Celery worker (separate terminal)
-celery -A backend.app.tasks.celery_app worker --loglevel=info
+celery -A app.tasks.celery_app worker --loglevel=info
 ```
 
 ---
@@ -192,6 +216,8 @@ AUTOMATION_ENABLED=false
 ```
 
 > `AUTOMATION_ENABLED` is a kill switch. When `false`, all automation rules are skipped and the platform operates in fully manual mode. Flip to `true` to activate the rule engine (Phase 7).
+
+> `.env` is gitignored — only `.env.example` (with placeholder values) is committed.
 
 ---
 
@@ -222,7 +248,7 @@ pytest tests/test_notifications.py -v                                     # Phas
 pytest tests/test_automation.py -v                                        # Phase 7 (pending)
 ```
 
-All tests run against an in-memory SQLite database via an async test client. Celery runs in eager mode during tests.
+All tests run against an in-memory SQLite database via an async test client. Celery runs in eager mode during tests (`task_eager_mode` fixture in `conftest.py`, reset after each test).
 
 ---
 
@@ -234,8 +260,10 @@ All tests run against an in-memory SQLite database via an async test client. Cel
 - Services own all business logic — routers stay thin (parse request, call service, return).
 - State machines are defined centrally in `app/core/state_machine.py` and enforced at the service layer, not in routers or models.
 - Automation hooks are registered against state machine transitions, not hardcoded inside service functions.
-- fire_hook supports async hook functions (inspect.iscoroutinefunction check (import inspect))
+- `fire_hook` supports async hook functions (`inspect.iscoroutinefunction` check).
 - A transition marked `requires_approval` always queues for review, regardless of whether it was triggered manually or by automation — this is intentional and consistent across listings and pipeline.
 - Every state transition is written to the audit log before (or as part of) execution.
 - `AUTOMATION_ENABLED=false` disables all rule engine execution without touching service logic or requiring code changes elsewhere.
+- Celery tasks are sync functions (`@celery_app.task`) — bodies are `async def` and bridged via the `async_task` decorator in `app/tasks/celery_app.py`, which wraps `asyncio.run(...)` around the coroutine. Do not `@celery_app.task` an `async def` function directly; Celery workers call tasks synchronously and won't await a coroutine on their own.
+- Jinja2 email rendering (`app/core/notifications.py`) has `autoescape=True` — required since template context can include user-supplied strings (listing address, contact name).
 - See `WORK_OUTLINE.md` for the authoritative, up-to-date build checklist — it tracks status at the file and function level and is the source of truth when this README and the code disagree.
