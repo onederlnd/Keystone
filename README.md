@@ -1,16 +1,47 @@
-# Keystone — Real Estate Management Platform
+# Keystone: Real Estate Transaction Platform
 
-Keystone is an internal platform built for real estate teams to manage the full transaction lifecycle — from first contact to closed deal. It gives agents a single place to track listings, manage buyer and seller relationships, generate transaction documents, and stay on top of their pipeline — with the system doing the heavy lifting and humans stepping in only when it matters.
+## What It Is
 
-The long-term goal is near-full automation: Keystone drives the transaction, agents oversee and override. Every architectural decision is made with that destination in mind.
+Keystone is a platform built for real estate teams to manage a deal from the very first contact with a buyer or seller all the way through closing. Instead of agents juggling spreadsheets, email threads, and paper documents, everything (listings, client relationships, deal progress, and paperwork) lives in one system.
 
----
+The long-term vision is a platform that **actively drives the transaction forward**, handling routine steps automatically, while agents stay in control and step in for anything that actually needs a human decision.
 
-## Where Things Stand
+## What's Working Today
 
-**Phases 1–3 are complete and fully tested.** That means the foundation — auth, roles, listings, contacts, and the deal pipeline — is live and working end-to-end, including the automation scaffolding (state machines, audit logging, and the approval queue) that later phases will build on.
+**Logins & Roles**
+Four types of users (admins, agents, buyers, and sellers) each see only what's relevant to them. Agents manage their own clients and listings; admins see everything.
 
-**Not yet built:** document generation, market analytics, notifications, and the automation rule engine itself (Phases 4–7). The infrastructure for all of them already exists in the codebase — hooks, the approval queue, audit logging — so building these phases is additive work, not rework.
+**Listings**
+Agents create and track property listings through their full lifecycle: Active, Pending, Under Contract, Sold (or Off Market). The system enforces valid next steps, so a listing can't jump straight from "just listed" to "sold," for example, and every change is time-stamped and logged.
+
+**Client Relationship Management (CRM)**
+A built-in CRM tracks every buyer, seller, and lead through a deal pipeline (New, Contacted, Showing Scheduled, Offer Submitted, Negotiating, Under Contract, Closed/Lost). Agents only see their own book of business.
+
+**Document Generation**
+Offers, disclosures, and agreements are generated automatically at the right point in a deal, pre-filled with existing data, and held for agent review before anything goes out.
+
+**Market Analysis**
+Comps, days-on-market, price-per-square-foot, and agent performance reporting, with the numbers feeding back into the system to flag things like stale listings or mispriced comps.
+
+## What's Being Built Next
+
+**Notifications** *(in progress)*
+Automatic email and text alerts at key moments: a listing status change, a document ready for signature, a deal moving to the next stage.
+
+**The Automation Engine** *(next up, this is the big one)*
+This is what the whole platform has been built toward: a rule-based system that watches deals in progress and takes routine action on its own, generating a document, sending a notification, advancing a stage, without an agent having to trigger it manually.
+
+Anything with real stakes (money, legal documents, a status change a client will see) is never applied automatically. It's queued for an agent to approve, adjust, or reject first. A human clicking "approve" goes through the exact same review step as an automated action would; there's no shortcut that skips oversight.
+
+There's also a single on/off switch for the whole automation layer. With it off, the platform runs in fully manual mode, identical to how it works today, which is what makes it safe to build and test the automation piece without risk to how agents already use the system day-to-day.
+
+## The Short Version
+
+Keystone today is a solid, fully working CRM and transaction tracker. Agents can already run listings, clients, and paperwork through the system end-to-end instead of piecing it together across spreadsheets and email.
+
+What's coming next is the part that makes it more than just a nicer spreadsheet: a system that does the busywork of a real estate deal automatically (generating documents, sending updates, advancing a deal to its next stage) with a human always making the final call on anything that matters. The goal isn't to remove agents from the process; it's to remove the parts of the process that don't need them.
+
+## Current Status
 
 | Phase | Module | Status |
 | --- | --- | --- |
