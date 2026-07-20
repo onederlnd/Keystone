@@ -1,12 +1,12 @@
 import uuid
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
 
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str
-    full_name: str
+    password: str = Field(min_length=8, max_length=128)
+    full_name: str = Field(max_length=200)
 
 
 class UserLogin(BaseModel):
@@ -26,9 +26,9 @@ class UserRead(BaseModel):
 
 
 class UserUpdate(BaseModel):
-    full_name: str | None = None
+    full_name: str | None = Field(default=None, max_length=200)
     email: EmailStr | None = None
-    password: str | None = None
+    password: str | None = Field(default=None, min_length=8, max_length=128)
 
 
 class Token(BaseModel):

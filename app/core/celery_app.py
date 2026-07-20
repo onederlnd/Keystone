@@ -7,15 +7,12 @@ from celery.schedules import crontab
 from app.core.config import settings
 
 
-def async_task(*args, **kwargs):
-    def decorator(func):
-        @wraps(func)
-        def wrapper(*a, **kw):
-            return asyncio.run(func(*a, **kw))
+def async_task(func):
+    @wraps(func)
+    def wrapper(*a, **kw):
+        return asyncio.run(func(*a, **kw))
 
-        return celery_app.task(*args, **kwargs)(wrapper)
-
-    return decorator
+    return wrapper
 
 
 celery_app = Celery(

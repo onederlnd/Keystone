@@ -381,37 +381,37 @@ These apply across every phase. Every decision about status modeling, service de
 
 Design decision: **one task call per recipient**, not one task looping internally — matches thin-hook architecture and isolates per-recipient send failures. Hooks loop through relevant roles and `.delay()` the task once per role.
 
-- [] `app/automation/notification_hooks.py` scaffolded — all 8 hook functions registered against `register_hook`, function bodies still `pass`
-- [ ] `on_listing_active` → loop `["agent", "seller"]`, call `send_listing_status_email.delay(listing_id, role)`
-- [ ] `on_listing_under_contract` → loop `["agent", "buyer", "seller"]`
-- [ ] `on_listing_sold` → loop `["agent", "buyer", "seller"]`
-- [ ] `on_listing_stale` → single call, `recipient_role="agent"`
-- [ ] `on_pipeline_offer_submitted` → loop `["agent", "seller"]`
-- [ ] `on_pipeline_closed` → loop `["agent", "buyer", "seller"]`
-- [ ] `on_document_sent` → single call to `send_document_ready_email(document_id)` (no `recipient_role` param — always contact)
-- [ ] `on_contact_created` → single call to `send_new_contact_email(contact_id)`
+- [x] `app/automation/notification_hooks.py` scaffolded — all 8 hook functions registered against `register_hook`, function bodies still `pass`
+- [x] `on_listing_active` → loop `["agent", "seller"]`, call `send_listing_status_email.delay(listing_id, role)`
+- [x] `on_listing_under_contract` → loop `["agent", "buyer", "seller"]`
+- [x] `on_listing_sold` → loop `["agent", "buyer", "seller"]`
+- [x] `on_listing_stale` → single call, `recipient_role="agent"`
+- [x] `on_pipeline_offer_submitted` → loop `["agent", "contact"]`
+- [x] `on_pipeline_closed` → loop `["agent", "contact"]`
+- [x] `on_document_sent` → single call to `send_document_ready_email(document_id)` (no `recipient_role` param — always contact)
+- [x] `on_contact_created` → single call to `send_new_contact_email(contact_id)`
 
 ### 6.3 Idempotency & Reliability
 
-- [ ] Dedup key per task: `event_type + entity_id + target_state`
-- [ ] Celery retry with exponential backoff, max 3 retries
-- [ ] Failures logged to `audit_log` with `action="notification_failed"`
+- [x] Dedup key per task: `event_type + entity_id + target_state`
+- [x] Celery retry with exponential backoff, max 3 retries
+- [x] Failures logged to `audit_log` with `action="notification_failed"`
 
 ### 6.4 Tests
 
-- [ ] `tests/test_notifications.py`
-  - [ ] Each hook fires the correct Celery task (eager mode, mock SMTP)
-  - [ ] Correct recipients per event
-  - [ ] Idempotency: running same task twice sends only one email
-  - [ ] Retry on SMTP failure, succeeds on second attempt
-  - [ ] Failure writes audit log entry
+- [x] `tests/test_notifications.py`
+  - [x] Each hook fires the correct Celery task (eager mode, mock SMTP)
+  - [x] Correct recipients per event
+  - [x] Idempotency: running same task twice sends only one email
+  - [x] Retry on SMTP failure, succeeds on second attempt
+  - [x] Failure writes audit log entry
 
 ### Phase 6 Completion Criteria
 
-- [ ] All notification types fire correctly through hooks
-- [ ] Zero manual `send_email` calls in service layer — all via hooks
-- [ ] Tasks idempotent and retriable
-- [ ] `pytest tests/test_notifications.py -v` — all green
+- [x] All notification types fire correctly through hooks
+- [x] Zero manual `send_email` calls in service layer — all via hooks
+- [x] Tasks idempotent and retriable
+- [x] `pytest tests/test_notifications.py -v` — all green
 
 ---
 
@@ -422,32 +422,32 @@ Design decision: **one task call per recipient**, not one task looping internall
 ### 6.5.1 Auth Hardening
 
 - [x] Confirmed `.env` is gitignored, not committed — only `.env.example` tracked
-- [ ] Rate limiting on `POST /auth/login` and `POST /auth/register` (e.g. `slowapi`, ~5/minute per IP)
-- [ ] Generic error message on failed login — `"Invalid email or password"` instead of `"User not found"`, to avoid leaking whether an email is registered (user enumeration)
-- [ ] Review JWT expiry (`ACCESS_TOKEN_EXPIRE_MINUTES=60`) and decide if a refresh-token flow is needed before the automation engine may be issuing/relying on longer-lived sessions
+- [x] Rate limiting on `POST /auth/login` and `POST /auth/register` (e.g. `slowapi`, ~5/minute per IP)
+- [x] Generic error message on failed login — `"Invalid email or password"` instead of `"User not found"`, to avoid leaking whether an email is registered (user enumeration)
+- [x] Review JWT expiry (`ACCESS_TOKEN_EXPIRE_MINUTES=60`) and decide if a refresh-token flow is needed before the automation engine may be issuing/relying on longer-lived sessions - no refresh flow for now
 
 ### 6.5.2 Input & Rendering Safety
 
 - [x] `app/core/notifications.py` — Jinja2 `Environment` has `autoescape=True` (was missing; user-supplied strings like listing address or contact name could otherwise inject raw HTML into outgoing emails)
-- [ ] Review free-text fields (`Listings.address`, `Contacts.full_name`, `notes` fields, etc.) for `max_length` constraints in Pydantic schemas — unbounded text feeding into PDFs/emails is a secondary version of the same issue
-- [ ] Confirm no user-supplied string is interpolated into a SQL query outside the ORM (spot-check any raw SQL, if present)
+- [x] Review free-text fields (`Listings.address`, `Contacts.full_name`, `notes` fields, etc.) for `max_length` constraints in Pydantic schemas — unbounded text feeding into PDFs/emails is a secondary version of the same issue
+- [x] Confirm no user-supplied string is interpolated into a SQL query outside the ORM (spot-check any raw SQL, if present)
 
 ### 6.5.3 Secrets & Logging
 
-- [ ] Confirm SMTP/DB credentials never appear in application logs (check any debug `print`/`echo=True` settings before shipping)
-- [ ] Confirm prod deployment does not reuse dev `.env` values (`SECRET_KEY`, `SMTP_PASS`) verbatim
+- [x] Confirm SMTP/DB credentials never appear in application logs (check any debug `print`/`echo=True` settings before shipping)
+- [ ] Confirm prod deployment does not reuse dev `.env` values (`SECRET_KEY`, `SMTP_PASS`) verbatim — deferred to actual deployment time, not yet applicable while still in dev
 
 ### 6.5.4 Tests
 
-- [ ] `tests/test_auth.py` — add case: repeated failed logins get rate-limited (429)
-- [ ] `tests/test_auth.py` — add case: login failure message identical for bad email vs. bad password
+- [x] `tests/test_auth.py` — add case: repeated failed logins get rate-limited (429)
+- [x] `tests/test_auth.py` — add case: login failure message identical for bad email vs. bad password
 
 ### Phase 6.5 Completion Criteria
 
-- [ ] Auth endpoints rate-limited and enumeration-resistant
-- [ ] All Jinja2 rendering paths confirmed autoescaped
-- [ ] No secrets in logs or committed files
-- [ ] Sign-off before flipping `AUTOMATION_ENABLED=true` in any shared environment
+- [x] Auth endpoints rate-limited and enumeration-resistant
+- [x] All Jinja2 rendering paths confirmed autoescaped
+- [x] No secrets in logs or committed files
+- [x] Sign-off before flipping `AUTOMATION_ENABLED=true` in any shared environment
 
 ---
 
@@ -457,8 +457,8 @@ Design decision: **one task call per recipient**, not one task looping internall
 
 ### 7.1 Rule Engine
 
-- [ ] `app/automation/engine.py`
-  - [ ] `AutomationRule` model: `id`, `name`, `trigger_event`, `condition` (JSON), `action`, `requires_approval`, `is_active`, `created_by_id`, timestamps
+- [x] `app/automation/engine.py`
+  - [x] `AutomationRule` model: `id`, `name`, `trigger_event`, `condition` (JSON), `action`, `requires_approval`, `is_active`, `created_by_id`, timestamps
   - [ ] `evaluate_rules(event, context, db)` — loads active rules for event, evaluates conditions, fires actions or queues approvals
   - [ ] `evaluate_condition(condition: dict, context: dict) -> bool` — supports basic comparisons: `eq`, `gt`, `lt`, `contains`, `days_since`
 - [ ] Alembic migration for `automation_rules` table

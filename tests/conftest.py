@@ -12,7 +12,7 @@ from app.models.user import Users, UserRole
 from app.models.pipeline import Pipelines
 from app.models.contact import Contacts
 from app.models.listing import Listings
-from app.tasks.celery_app import celery_app
+from app.core.celery_app import celery_app
 
 from app.models.document import Documents
 
@@ -257,5 +257,15 @@ async def patch_async_session_local(monkeypatch):
     session. Point that sessionmaker at the test engine, or hook writes land
     in an unrelated database.
     """
-    monkeypatch.setattr("app.core.database.AsyncSessionLocal", TestSessionLocal)
+    monkeypatch.setattr("app.tasks.email_tasks.AsyncSessionLocal", TestSessionLocal)
+    monkeypatch.setattr("app.tasks.base.AsyncSessionLocal", TestSessionLocal)
+    monkeypatch.setattr(
+        "app.automation.document_hooks.AsyncSessionLocal", TestSessionLocal
+    )
+    monkeypatch.setattr(
+        "app.automation.pipeline_hooks.AsyncSessionLocal", TestSessionLocal
+    )
+    monkeypatch.setattr(
+        "app.automation.analytics_hooks.AsyncSessionLocal", TestSessionLocal
+    )
     yield

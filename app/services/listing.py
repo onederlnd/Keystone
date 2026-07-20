@@ -137,7 +137,7 @@ async def change_status(
             proposed_action="change_status",
             proposed_state=new_status,
             context={
-                "listing.id": str(listing.id),
+                "listing_id": str(listing.id),
                 "previous_status": listing.status,
                 "new_status": new_status,
                 "changed_by_id": str(changed_by_id),
@@ -169,7 +169,7 @@ async def change_status(
         db.add(log)
 
         context = {
-            "listing.id": str(listing.id),
+            "listing_id": str(listing.id),
             "new_status": new_status,
             "changed_by_id": str(changed_by_id),
         }

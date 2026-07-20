@@ -11,7 +11,7 @@ from app.models.listing_status_history import ListingStatusHistory
 
 
 @pytest_asyncio.fixture(autouse=True)
-async def register_hooks_for_test(reset_hook_registry, patch_async_session_local):
+async def register_hooks_for_test(reset_hook_registry, monkeypatch):
     """
     Same reload approach as test_document_hooks.py's fixture — reload if
     already imported, otherwise import fresh. Avoids double-registration on
@@ -19,12 +19,17 @@ async def register_hooks_for_test(reset_hook_registry, patch_async_session_local
     """
     import sys
     import importlib
+    from tests.conftest import TestSessionLocal
 
     for name in ("app.automation.analytics_hooks",):
         if name in sys.modules:
             importlib.reload(sys.modules[name])
         else:
             importlib.import_module(name)
+
+    monkeypatch.setattr(
+        "app.automation.analytics_hooks.AsyncSessionLocal", TestSessionLocal
+    )
 
     yield
 
@@ -47,7 +52,7 @@ async def _add_history(db_session, listing_id, new_status, changed_at, changed_b
 
 @pytest.mark.asyncio
 async def test_listing_stale_hook_writes_approval_queue_entry(
-    db_session, create_listing_in_db
+    db_session, create_listing_in_db, patch_async_session_local
 ):
     listing = await create_listing_in_db(status="active")
 
@@ -69,7 +74,7 @@ async def test_listing_stale_hook_writes_approval_queue_entry(
 
 @pytest.mark.asyncio
 async def test_listing_price_alert_hook_writes_approval_queue_entry_with_percent_diff(
-    db_session, create_listing_in_db
+    db_session, create_listing_in_db, patch_async_session_local
 ):
     listing = await create_listing_in_db(status="active")
 

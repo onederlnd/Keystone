@@ -7,3 +7,4 @@ from app.models.user import Users  # noqa
 from app.models.contact import Contacts  # noqa
 from app.models.pipeline import Pipelines  # noqa
 from app.models.document import Documents  # noqa
+from app.models.automation_rule import AutomationRule  # noqa

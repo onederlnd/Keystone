@@ -2,15 +2,15 @@
 
 import uuid
 from datetime import datetime
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class DocumentGenerateRequest(BaseModel):
     listing_id: uuid.UUID
     contact_id: uuid.UUID
     pipeline_id: uuid.UUID
-    type: str
-    notes: str | None = None
+    type: str = Field(max_length=50)
+    notes: str | None = Field(default=None, max_length=2000)
 
 
 class DocumentRead(BaseModel):

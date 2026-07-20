@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     environment: str = "development"
     database_url: str
     algorithm: str = "HS256"
-    debug: bool = True
+    debug: bool = False
 
     # Keys
     secret_key: str

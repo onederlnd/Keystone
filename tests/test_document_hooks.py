@@ -14,7 +14,7 @@ from app.services.document import update_status
 
 
 @pytest_asyncio.fixture(autouse=True)
-async def register_hooks_for_test(reset_hook_registry, patch_async_session_local):
+async def register_hooks_for_test(reset_hook_registry, monkeypatch):
     """
     reset_hook_registry (conftest, autouse) clears REGISTRY before/after every
     test. Hook modules only call register_hook() at import time, so we have to
@@ -26,6 +26,7 @@ async def register_hooks_for_test(reset_hook_registry, patch_async_session_local
     import sys
     import importlib
     from app.automation.registry import REGISTRY
+    from tests.conftest import TestSessionLocal
 
     REGISTRY.clear()
 
@@ -37,6 +38,13 @@ async def register_hooks_for_test(reset_hook_registry, patch_async_session_local
             importlib.reload(sys.modules[name])
         else:
             importlib.import_module(name)
+
+    monkeypatch.setattr(
+        "app.automation.document_hooks.AsyncSessionLocal", TestSessionLocal
+    )
+    monkeypatch.setattr(
+        "app.automation.pipeline_hooks.AsyncSessionLocal", TestSessionLocal
+    )
     yield
 
 
@@ -56,7 +64,7 @@ def _mock_pdf_pipeline():
 
 @pytest.mark.asyncio
 async def test_listing_active_hook_generates_listing_agreement(
-    db_session, create_listing_in_db
+    db_session, create_listing_in_db, patch_async_session_local
 ):
     listing = await create_listing_in_db()
 
@@ -78,7 +86,9 @@ async def test_listing_active_hook_generates_listing_agreement(
 
 
 @pytest.mark.asyncio
-async def test_listing_active_hook_queues_for_review(db_session, create_listing_in_db):
+async def test_listing_active_hook_queues_for_review(
+    db_session, create_listing_in_db, patch_async_session_local
+):
     listing = await create_listing_in_db()
 
     p1, p2, p3 = _mock_pdf_pipeline()
@@ -105,7 +115,7 @@ async def test_listing_active_hook_queues_for_review(db_session, create_listing_
 
 @pytest.mark.asyncio
 async def test_listing_active_hook_noop_when_automation_disabled(
-    db_session, create_listing_in_db
+    db_session, create_listing_in_db, patch_async_session_local
 ):
     listing = await create_listing_in_db()
 
@@ -124,7 +134,7 @@ async def test_listing_active_hook_noop_when_automation_disabled(
 
 @pytest.mark.asyncio
 async def test_pipeline_offer_submitted_hook_generates_offer_letter(
-    db_session, create_pipeline_in_db
+    db_session, create_pipeline_in_db, patch_async_session_local
 ):
     pipeline = await create_pipeline_in_db(stage="offer_submitted")
 
@@ -146,7 +156,7 @@ async def test_pipeline_offer_submitted_hook_generates_offer_letter(
 
 @pytest.mark.asyncio
 async def test_pipeline_offer_submitted_hook_queues_for_review(
-    db_session, create_pipeline_in_db
+    db_session, create_pipeline_in_db, patch_async_session_local
 ):
     pipeline = await create_pipeline_in_db(stage="offer_submitted")
 
@@ -174,7 +184,7 @@ async def test_pipeline_offer_submitted_hook_queues_for_review(
 
 @pytest.mark.asyncio
 async def test_pipeline_closed_hook_generates_closing_summary(
-    db_session, create_pipeline_in_db
+    db_session, create_pipeline_in_db, patch_async_session_local
 ):
     pipeline = await create_pipeline_in_db(stage="closed")
 

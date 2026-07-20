@@ -58,13 +58,6 @@ def run_migrations_offline() -> None:
 
 
 async def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
-
-    In this scenario we need to create an Engine
-    and associate a connection with the context.
-
-    """
-
     def do_run_migrations(connection):
         print("Connected to:", connection.engine.url)
         print("Existing tables:", connection.engine.dialect.get_table_names(connection))
@@ -75,7 +68,6 @@ async def run_migrations_online() -> None:
             render_as_batch=True,
         )
         with context.begin_transaction():
-            print("Connected to:", connection.engine.url)
             context.run_migrations()
 
     from sqlalchemy.ext.asyncio import create_async_engine
@@ -84,7 +76,7 @@ async def run_migrations_online() -> None:
         settings.database_url,
         poolclass=pool.NullPool,
     )
-    async with connectable.connect() as connection:
+    async with connectable.begin() as connection:
         await connection.run_sync(do_run_migrations)
 
     await connectable.dispose()
