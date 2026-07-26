@@ -1,7 +1,9 @@
 # app/automation/hooks.py
 import inspect
 from app.core.config import settings
+from app.core.database import AsyncSessionLocal
 from app.automation.registry import REGISTRY
+from app.automation.engine import evaluate_rules
 
 
 def register_hook(event, fn):
@@ -13,6 +15,9 @@ async def fire_hook(event, context):
     if not settings.automation_enabled:
         print(f"[AUTOMATION DISABLED] Would fire hook: {event} with context: {context}")
         return
+
+    async with AsyncSessionLocal() as db:
+        await evaluate_rules(event, context, db)
 
     functions = REGISTRY.get(event, [])
 

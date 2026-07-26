@@ -95,7 +95,7 @@ These apply across every phase. Every decision about status modeling, service de
 - [x] `alembic init alembic` run, `env.py` wired to async engine + `Base.metadata`
 - [x] Initial Alembic migration covering `users`, `audit_log`, `approval_queue`
 
-### 1.2 User Model & Schema
+### 1.2 Users Model & Schema
 
 - [x] `app/models/user.py`
   - [x] `id` UUID PK, default `uuid4`
@@ -111,7 +111,7 @@ These apply across every phase. Every decision about status modeling, service de
 
 ### 1.3 Services & Routes
 
-- [x] `app/services/user_service.py`
+- [x] `app/services/user.py`
   - [x] `create_user`, `authenticate_user`, `get_user_by_id`, `get_user_by_email`, `update_user`, `deactivate_user`
   - [x] Each mutating function writes to `audit_log`
 - [x] `app/routers/auth.py` — `POST /auth/register`, `POST /auth/login`
@@ -165,7 +165,7 @@ These apply across every phase. Every decision about status modeling, service de
 
 ### 2.3 Service & Routes
 
-- [x] `app/services/listing_service.py`
+- [x] `app/services/listing.py`
   - [x] `create_listing`, `get_listing`, `list_listings`, `update_listing`, `archive_listing`
   - [x] `change_status(db, id, new_status, note, changed_by_id, triggered_by="manual")`
     - [x] Validates transition via `LISTING_MACHINE.can_transition()`
@@ -220,8 +220,8 @@ These apply across every phase. Every decision about status modeling, service de
 
 ### 3.3 Services & Routes
 
-- [x] `app/services/contact_service.py` — standard CRUD with ownership checks; `create_contact` fires `contact.created` hook
-- [x] `app/services/pipeline_service.py`
+- [x] `app/services/contact.py` — standard CRUD with ownership checks; `create_contact` fires `contact.created` hook
+- [x] `app/services/pipeline.py`
   - [x] `add_to_pipeline`, `get_pipeline_entry`, `list_pipeline`, `remove_pipeline_entry`
   - [x] `update_pipeline_entry(db, id, payload, triggered_by="manual")`
     - [x] Stage change validated via `PIPELINE_MACHINE.get_transition()`
@@ -278,7 +278,7 @@ These apply across every phase. Every decision about status modeling, service de
 
 ### 4.3 Service & Routes
 
-- [x] `app/services/document_service.py`
+- [x] `app/services/document.py`
   - [x] `render_template`, `generate_pdf`, `save_pdf_to_disk`, `create_document_record`
   - [x] `get_document`, `list_documents`
   - [x] `update_status(db, id, new_status, triggered_by="manual")`
@@ -321,7 +321,7 @@ These apply across every phase. Every decision about status modeling, service de
 
 ### 5.1 Service Logic
 
-- [x] `app/services/analytics_service.py`
+- [x] `app/services/analytics.py`
   - [x] `get_comps(db, zip, city, min_price, max_price)`
   - [x] `get_price_per_sqft(db, zip=None, city=None)` — guards `sqft == 0`
   - [x] `get_days_on_market(db, zip=None, city=None)` — `sold` listings only, uses status history timestamps
@@ -459,10 +459,10 @@ Design decision: **one task call per recipient**, not one task looping internall
 
 - [x] `app/automation/engine.py`
   - [x] `AutomationRule` model: `id`, `name`, `trigger_event`, `condition` (JSON), `action`, `requires_approval`, `is_active`, `created_by_id`, timestamps
-  - [ ] `evaluate_rules(event, context, db)` — loads active rules for event, evaluates conditions, fires actions or queues approvals
-  - [ ] `evaluate_condition(condition: dict, context: dict) -> bool` — supports basic comparisons: `eq`, `gt`, `lt`, `contains`, `days_since`
-- [ ] Alembic migration for `automation_rules` table
-- [ ] `app/automation/hooks.py` updated — `fire_hook` now calls `evaluate_rules` when `AUTOMATION_ENABLED=True`
+  - [x] `evaluate_rules(event, context, db)` — loads active rules for event, evaluates conditions, fires actions or queues approvals
+  - [x] `evaluate_condition(condition: dict, context: dict) -> bool` — supports basic comparisons: `eq`, `gt`, `lt`, `contains`, `days_since`
+- [x] Alembic migration for `automation_rules` table
+- [x] `app/automation/hooks.py` updated — `fire_hook` now calls `evaluate_rules` when `AUTOMATION_ENABLED=True`
 
 ### 7.2 Approval Queue API
 
@@ -472,7 +472,7 @@ Design decision: **one task call per recipient**, not one task looping internall
   - [ ] `POST /approval-queue/{id}/approve` — applies proposed state change, writes override log
   - [ ] `POST /approval-queue/{id}/reject` — marks rejected, writes override log
   - [ ] `POST /approval-queue/{id}/modify` — agent edits proposed action before approving
-- [ ] `app/services/approval_service.py`
+- [ ] `app/services/approval.py`
   - [ ] `get_pending_for_agent(db, agent_id)`
   - [ ] `approve_entry(db, id, reviewer_id)` — applies the queued action, triggers downstream hooks
   - [ ] `reject_entry(db, id, reviewer_id, reason)`

@@ -39,7 +39,7 @@ async def get_contact_route(
 
 
 @router.get("/", response_model=list[ContactRead])
-async def list_contacts_routes(
+async def list_contacts_route(
     type: str | None = None,
     db: AsyncSession = Depends(get_db),
     current_user: Users = Depends(get_current_active_user),
